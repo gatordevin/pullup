@@ -54,6 +54,34 @@ export default function ProfileScreen() {
   const [friendSuccess, setFriendSuccess] = useState<string | null>(null);
   const [addingFriend, setAddingFriend] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [referralShareCopied, setReferralShareCopied] = useState(false);
+
+  const shareUrl = async (url: string, message: string) => {
+    if (Platform.OS === "web") {
+      // Try Web Share API (works on mobile browsers)
+      if (typeof navigator !== "undefined" && (navigator as any).share) {
+        try {
+          await (navigator as any).share({ title: "PullUp", text: message, url });
+          return;
+        } catch (e: any) {
+          // User cancelled (AbortError) or not supported - fall through to clipboard
+          if (e?.name === "AbortError") return;
+        }
+      }
+      // Clipboard fallback for desktop browsers
+      try {
+        await (navigator as any).clipboard.writeText(url);
+      } catch {
+        try { await Clipboard.setStringAsync(url); } catch {}
+      }
+    } else {
+      await Clipboard.setStringAsync(url);
+      try {
+        const { Share } = await import("react-native");
+        await Share.share({ message, url });
+      } catch {}
+    }
+  };
   const {
     friends,
     incomingRequests,
@@ -393,16 +421,14 @@ export default function ProfileScreen() {
               style={styles.shareReferralBtn}
               onPress={async () => {
                 const url = getReferralUrl(referralCode);
-                try {
-                  await Clipboard.setStringAsync(url);
-                } catch {}
-                try {
-                  const { Share } = await import("react-native");
-                  await Share.share({ message: `Join me on PullUp! ${url}`, url });
-                } catch {}
+                await shareUrl(url, `Join me on PullUp! ${url}`);
+                setReferralShareCopied(true);
+                setTimeout(() => setReferralShareCopied(false), 2500);
               }}
             >
-              <Text style={styles.shareReferralBtnText}>📤 Share Referral Link</Text>
+              <Text style={styles.shareReferralBtnText}>
+                {referralShareCopied ? "✓ Link Copied!" : "📤 Share Referral Link"}
+              </Text>
             </Pressable>
           </View>
         )}
@@ -485,7 +511,8 @@ export default function ProfileScreen() {
             <Pressable
               onPress={async () => {
                 if (!user) return;
-                await Clipboard.setStringAsync(getInviteUrl(user.id));
+                const url = getInviteUrl(user.id);
+                await shareUrl(url, `Add me on PullUp! ${url}`);
                 setInviteCopied(true);
                 setTimeout(() => setInviteCopied(false), 2500);
               }}

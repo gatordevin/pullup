@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useOAuth, useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { useForm, Controller } from "react-hook-form";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { loginSchema, type LoginForm } from "@/lib/validators";
 import { Colors, FontSize, Spacing, BorderRadius } from "@/lib/constants";
+import { consumePendingRedirect } from "@/lib/redirectStore";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -30,6 +31,7 @@ export default function LoginScreen() {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } = useSignUp();
+  const { redirect: redirectParam } = useLocalSearchParams<{ redirect?: string }>();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,14 +66,15 @@ export default function LoginScreen() {
         await signUp.create({ emailAddress: data.email, password: data.password });
         await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
         setLoading(false);
-        router.push({ pathname: "/(auth)/verify", params: { email: data.email } });
+        router.push({ pathname: "/(auth)/verify", params: { email: data.email, redirect: redirectParam ?? "" } });
       } else {
         if (!signInLoaded || !signIn) return;
         const result = await signIn.create({ identifier: data.email, password: data.password });
         setLoading(false);
         if (result.status === "complete" && setSignInActive) {
           await setSignInActive({ session: result.createdSessionId });
-          router.replace("/");
+          const redirect = consumePendingRedirect() ?? redirectParam;
+          router.replace((redirect as any) ?? "/");
         }
       }
     } catch (err: any) {
@@ -87,7 +90,8 @@ export default function LoginScreen() {
       const { createdSessionId, setActive } = await startOAuthFlow();
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        router.replace("/");
+        const redirect = consumePendingRedirect() ?? redirectParam;
+        router.replace((redirect as any) ?? "/");
       }
     } catch (err: any) {
       setError(err?.errors?.[0]?.longMessage ?? err?.message ?? "Sign in failed");

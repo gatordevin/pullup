@@ -714,7 +714,7 @@ export default function GameDetailScreen() {
                   <View key={match.id} style={styles.matchCard}>
                     <View style={styles.matchRow}>
                       <View style={[styles.matchTeam, team1Win && styles.matchTeamWin]}>
-                        <Text style={styles.matchTeamLabel}>{team1Win ? "🏆 " : ""}Team 1</Text>
+                        <Text style={styles.matchTeamLabel}>{team1Win ? "🏆 " : ""}Team A</Text>
                         <Text style={styles.matchScore}>{match.team1_score}</Text>
                         <Text style={styles.matchPlayers} numberOfLines={1}>
                           {team1.map((p) => p.guest_name ?? p.profile?.display_name ?? "Player").join(", ") || "—"}
@@ -722,7 +722,7 @@ export default function GameDetailScreen() {
                       </View>
                       <Text style={styles.matchVs}>vs</Text>
                       <View style={[styles.matchTeam, team2Win && styles.matchTeamWin]}>
-                        <Text style={styles.matchTeamLabel}>{team2Win ? "🏆 " : ""}Team 2</Text>
+                        <Text style={styles.matchTeamLabel}>{team2Win ? "🏆 " : ""}Team B</Text>
                         <Text style={styles.matchScore}>{match.team2_score}</Text>
                         <Text style={styles.matchPlayers} numberOfLines={1}>
                           {team2.map((p) => p.guest_name ?? p.profile?.display_name ?? "Player").join(", ") || "—"}
@@ -819,59 +819,105 @@ export default function GameDetailScreen() {
           <View style={[styles.modalCard, { maxHeight: "85%" }]}>
             <Text style={styles.modalTitle}>📊 Record Match</Text>
 
-            {/* Score inputs */}
+            {/* Score inputs with stepper */}
             <View style={styles.scoreRow}>
               <View style={styles.scoreBox}>
-                <Text style={styles.scoreLabel}>Team 1</Text>
-                <TextInput
-                  style={styles.scoreInput}
-                  keyboardType="number-pad"
-                  value={team1Score}
-                  onChangeText={setTeam1Score}
-                  maxLength={2}
-                  selectTextOnFocus
-                />
+                <Text style={styles.scoreLabel}>Team A</Text>
+                <View style={styles.scoreStepperRow}>
+                  <Pressable
+                    style={styles.scoreStepper}
+                    onPress={() => setTeam1Score((v) => String(Math.max(0, parseInt(v || "0") - 1)))}
+                  >
+                    <Text style={styles.scoreStepperText}>−</Text>
+                  </Pressable>
+                  <TextInput
+                    style={styles.scoreInput}
+                    keyboardType="number-pad"
+                    value={team1Score}
+                    onChangeText={setTeam1Score}
+                    maxLength={2}
+                    selectTextOnFocus
+                  />
+                  <Pressable
+                    style={styles.scoreStepper}
+                    onPress={() => setTeam1Score((v) => String(Math.min(99, parseInt(v || "0") + 1)))}
+                  >
+                    <Text style={styles.scoreStepperText}>+</Text>
+                  </Pressable>
+                </View>
               </View>
-              <Text style={styles.scoreVs}>—</Text>
+              <Text style={styles.scoreVs}>vs</Text>
               <View style={styles.scoreBox}>
-                <Text style={styles.scoreLabel}>Team 2</Text>
-                <TextInput
-                  style={styles.scoreInput}
-                  keyboardType="number-pad"
-                  value={team2Score}
-                  onChangeText={setTeam2Score}
-                  maxLength={2}
-                  selectTextOnFocus
-                />
+                <Text style={[styles.scoreLabel, { color: "#4A90E2" }]}>Team B</Text>
+                <View style={styles.scoreStepperRow}>
+                  <Pressable
+                    style={[styles.scoreStepper, { borderColor: "#4A90E2" }]}
+                    onPress={() => setTeam2Score((v) => String(Math.max(0, parseInt(v || "0") - 1)))}
+                  >
+                    <Text style={styles.scoreStepperText}>−</Text>
+                  </Pressable>
+                  <TextInput
+                    style={[styles.scoreInput, { borderColor: "#4A90E2" }]}
+                    keyboardType="number-pad"
+                    value={team2Score}
+                    onChangeText={setTeam2Score}
+                    maxLength={2}
+                    selectTextOnFocus
+                  />
+                  <Pressable
+                    style={[styles.scoreStepper, { borderColor: "#4A90E2" }]}
+                    onPress={() => setTeam2Score((v) => String(Math.min(99, parseInt(v || "0") + 1)))}
+                  >
+                    <Text style={styles.scoreStepperText}>+</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
 
             {/* Player team assignment */}
             <Text style={styles.assignTitle}>Assign Players to Teams</Text>
             <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false}>
+              {/* Unassigned counter */}
+              {(() => {
+                const unassigned = participants.filter(p => !teamAssignments[p.user_id]).length;
+                return unassigned > 0 ? (
+                  <Text style={{ fontSize: 12, color: Colors.textMuted, textAlign: "center", marginBottom: Spacing.sm }}>
+                    {unassigned} player{unassigned !== 1 ? "s" : ""} not yet assigned
+                  </Text>
+                ) : (
+                  <Text style={{ fontSize: 12, color: Colors.success, textAlign: "center", marginBottom: Spacing.sm }}>
+                    ✓ All players assigned
+                  </Text>
+                );
+              })()}
+
               {participants.map((p) => {
                 const assigned = teamAssignments[p.user_id];
                 return (
                   <View key={p.user_id} style={styles.assignRow}>
                     <Text style={styles.assignName} numberOfLines={1}>
-                      {p.profile?.display_name ?? "Player"}
+                      {p.profiles?.display_name ?? "Player"}
                     </Text>
                     <View style={styles.teamBtns}>
                       <Pressable
                         style={[styles.teamBtn, assigned === 1 && styles.teamBtnActive1]}
                         onPress={() =>
-                          setTeamAssignments((prev) => ({ ...prev, [p.user_id]: 1 }))
+                          setTeamAssignments((prev) => ({ ...prev, [p.user_id]: assigned === 1 ? undefined as any : 1 }))
                         }
                       >
-                        <Text style={[styles.teamBtnText, assigned === 1 && styles.teamBtnTextActive]}>T1</Text>
+                        <Text style={[styles.teamBtnText, assigned === 1 && { color: Colors.accent, fontWeight: "800" }]}>
+                          {assigned === 1 ? "✓ " : ""}Team A
+                        </Text>
                       </Pressable>
                       <Pressable
                         style={[styles.teamBtn, assigned === 2 && styles.teamBtnActive2]}
                         onPress={() =>
-                          setTeamAssignments((prev) => ({ ...prev, [p.user_id]: 2 }))
+                          setTeamAssignments((prev) => ({ ...prev, [p.user_id]: assigned === 2 ? undefined as any : 2 }))
                         }
                       >
-                        <Text style={[styles.teamBtnText, assigned === 2 && styles.teamBtnTextActive]}>T2</Text>
+                        <Text style={[styles.teamBtnText, assigned === 2 && { color: "#4A90E2", fontWeight: "800" }]}>
+                          {assigned === 2 ? "✓ " : ""}Team B
+                        </Text>
                       </Pressable>
                     </View>
                   </View>
@@ -883,7 +929,7 @@ export default function GameDetailScreen() {
                 <Text style={styles.guestSectionTitle}>Non-app players</Text>
                 {team1Guests.map((g, i) => (
                   <View key={`t1g${i}`} style={styles.guestRow}>
-                    <Text style={styles.guestTeamBadge}>T1</Text>
+                    <Text style={styles.guestTeamBadge}>Team A</Text>
                     <Text style={styles.guestName}>{g.name}{g.email ? ` (${g.email})` : ""}</Text>
                     <Pressable onPress={() => setTeam1Guests((prev) => prev.filter((_, j) => j !== i))}>
                       <Text style={styles.guestRemove}>✕</Text>
@@ -892,7 +938,7 @@ export default function GameDetailScreen() {
                 ))}
                 {team2Guests.map((g, i) => (
                   <View key={`t2g${i}`} style={styles.guestRow}>
-                    <Text style={[styles.guestTeamBadge, { backgroundColor: "#4A90E2" + "33", color: "#4A90E2" }]}>T2</Text>
+                    <Text style={[styles.guestTeamBadge, { backgroundColor: "#4A90E2" + "33", color: "#4A90E2" }]}>Team B</Text>
                     <Text style={styles.guestName}>{g.name}{g.email ? ` (${g.email})` : ""}</Text>
                     <Pressable onPress={() => setTeam2Guests((prev) => prev.filter((_, j) => j !== i))}>
                       <Text style={styles.guestRemove}>✕</Text>
@@ -942,10 +988,10 @@ export default function GameDetailScreen() {
                 ) : (
                   <View style={{ flexDirection: "row", gap: Spacing.sm, marginTop: Spacing.sm }}>
                     <Pressable style={[styles.teamBtn, { flex: 1 }]} onPress={() => setAddingGuestTeam(1)}>
-                      <Text style={styles.teamBtnText}>+ T1 Guest</Text>
+                      <Text style={styles.teamBtnText}>+ Team A Guest</Text>
                     </Pressable>
                     <Pressable style={[styles.teamBtn, { flex: 1 }]} onPress={() => setAddingGuestTeam(2)}>
-                      <Text style={styles.teamBtnText}>+ T2 Guest</Text>
+                      <Text style={styles.teamBtnText}>+ Team B Guest</Text>
                     </Pressable>
                   </View>
                 )}
@@ -1959,6 +2005,27 @@ const styles = StyleSheet.create({
   },
   scoreBox: {
     alignItems: "center",
+  },
+  scoreStepperRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  scoreStepper: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.darkInput,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scoreStepperText: {
+    fontSize: 20,
+    color: Colors.accent,
+    fontWeight: "700",
+    lineHeight: 22,
   },
   scoreLabel: {
     fontSize: FontSize.sm,

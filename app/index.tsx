@@ -3,14 +3,20 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
 import { Colors } from "@/lib/constants";
+import { consumePendingRedirect } from "@/lib/redirectStore";
 
 export default function Index() {
   const { isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
-    // Everyone goes to the feed — login is not required
-    router.replace("/(tabs)");
+    const redirect = consumePendingRedirect();
+    if (redirect) {
+      router.replace(redirect as any);
+    } else {
+      // Everyone goes to the feed — login is not required
+      router.replace("/(tabs)");
+    }
   }, [isLoading]);
 
   return (

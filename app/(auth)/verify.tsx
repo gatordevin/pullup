@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { otpSchema, type OtpForm } from "@/lib/validators";
 import { Colors, FontSize, Spacing } from "@/lib/constants";
+import { consumePendingRedirect } from "@/lib/redirectStore";
 
 export default function VerifyScreen() {
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, redirect: redirectParam } = useLocalSearchParams<{ email: string; redirect?: string }>();
   const { signUp, setActive, isLoaded } = useSignUp();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,8 @@ export default function VerifyScreen() {
 
       if (result.status === "complete" && setActive) {
         await setActive({ session: result.createdSessionId });
-        router.replace("/");
+        const redirect = consumePendingRedirect() ?? redirectParam;
+        router.replace((redirect as any) ?? "/");
       }
     } catch (err: any) {
       setLoading(false);

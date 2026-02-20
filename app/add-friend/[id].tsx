@@ -19,6 +19,7 @@ import {
   Spacing,
   BorderRadius,
 } from "@/lib/constants";
+import { setPendingRedirect } from "@/lib/redirectStore";
 import type { Profile } from "@/types/database";
 
 export default function AddFriendScreen() {
@@ -144,12 +145,13 @@ export default function AddFriendScreen() {
               Sign up or log in to add {name} as a friend.
             </Text>
             <Pressable
-              onPress={() =>
+              onPress={() => {
+                setPendingRedirect(`/add-friend/${id}`);
                 router.push({
                   pathname: "/(auth)/login",
                   params: { redirect: `/add-friend/${id}` },
-                })
-              }
+                });
+              }}
               style={styles.primaryBtn}
             >
               <LinearGradient
