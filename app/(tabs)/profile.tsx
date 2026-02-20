@@ -33,6 +33,7 @@ import {
   UF_LOCATIONS,
   APP_URL,
   getInviteUrl,
+  sportInfo,
 } from "@/lib/constants";
 import type { GameWithLocation } from "@/types/database";
 
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
     declineRequest,
     removeFriend,
   } = useFriends(user?.id);
-  const { stats: playerStats, fetchStats: fetchPlayerStats } = usePlayerStats(user?.id);
+  const { statsBySport, totals, fetchStats: fetchPlayerStats } = usePlayerStats(user?.id);
 
   useEffect(() => {
     if (user) {
@@ -288,48 +289,55 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Match Stats */}
-        {playerStats && playerStats.matches_played > 0 && (
-          <View style={styles.matchStatsCard}>
+        {/* Match Stats — per sport */}
+        {statsBySport.length > 0 && (
+          <View style={{ marginBottom: Spacing.lg, paddingHorizontal: Spacing.lg }}>
             <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
-            <View style={styles.matchStatsRow}>
-              <View style={styles.matchStatItem}>
-                <Text style={styles.matchStatValue}>{playerStats.matches_played}</Text>
-                <Text style={styles.matchStatLabel}>Played</Text>
-              </View>
-              <View style={styles.matchStatItem}>
-                <Text style={[styles.matchStatValue, { color: Colors.success }]}>{playerStats.wins}</Text>
-                <Text style={styles.matchStatLabel}>Wins</Text>
-              </View>
-              <View style={styles.matchStatItem}>
-                <Text style={[styles.matchStatValue, { color: Colors.error }]}>{playerStats.losses}</Text>
-                <Text style={styles.matchStatLabel}>Losses</Text>
-              </View>
-              <View style={styles.matchStatItem}>
-                <Text style={styles.matchStatValue}>
-                  {playerStats.matches_played > 0
-                    ? Math.round((playerStats.wins / playerStats.matches_played) * 100) + "%"
-                    : "—"}
-                </Text>
-                <Text style={styles.matchStatLabel}>Win %</Text>
-              </View>
-            </View>
-            <View style={styles.eloRow}>
-              <View style={styles.eloBox}>
-                <Text style={styles.eloValue}>{playerStats.elo_rating}</Text>
-                <Text style={styles.eloLabel}>ELO Rating</Text>
-              </View>
-              <View style={styles.eloBox}>
-                <Text style={[styles.eloValue, { color: Colors.accent }]}>{playerStats.highest_elo}</Text>
-                <Text style={styles.eloLabel}>Peak ELO</Text>
-              </View>
-            </View>
+            {statsBySport.map((s) => {
+              const sport = sportInfo(s.sport);
+              const winPct = s.matches_played > 0
+                ? Math.round((s.wins / s.matches_played) * 100)
+                : 0;
+              return (
+                <View key={s.sport} style={styles.matchStatsCard}>
+                  <View style={styles.statsCardHeader}>
+                    <Text style={styles.statsCardEmoji}>{sport.emoji}</Text>
+                    <Text style={styles.statsCardSport}>{sport.label}</Text>
+                    <View style={styles.eloChip}>
+                      <Text style={styles.eloChipText}>{s.elo_rating} ELO</Text>
+                    </View>
+                  </View>
+                  <View style={styles.matchStatsRow}>
+                    <View style={styles.matchStatItem}>
+                      <Text style={styles.matchStatValue}>{s.matches_played}</Text>
+                      <Text style={styles.matchStatLabel}>Played</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={[styles.matchStatValue, { color: Colors.success }]}>{s.wins}</Text>
+                      <Text style={styles.matchStatLabel}>Wins</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={[styles.matchStatValue, { color: Colors.error }]}>{s.losses}</Text>
+                      <Text style={styles.matchStatLabel}>Losses</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={styles.matchStatValue}>{winPct}%</Text>
+                      <Text style={styles.matchStatLabel}>Win %</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={[styles.matchStatValue, { color: Colors.accent }]}>{s.highest_elo}</Text>
+                      <Text style={styles.matchStatLabel}>Peak</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
         {/* Show placeholder if no matches yet */}
-        {(!playerStats || playerStats.matches_played === 0) && user && !isGuest && (
-          <View style={styles.matchStatsCard}>
+        {statsBySport.length === 0 && user && !isGuest && (
+          <View style={[styles.matchStatsCard, { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg }]}>
             <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
             <Text style={styles.matchStatsEmpty}>No matches recorded yet. Join a game and record your first match!</Text>
           </View>
@@ -893,9 +901,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
-    marginHorizontal: Spacing.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   matchStatsSectionTitle: {
     fontSize: FontSize.sm,
@@ -903,48 +910,53 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  statsCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  statsCardEmoji: {
+    fontSize: 22,
+  },
+  statsCardSport: {
+    fontSize: FontSize.md,
+    fontWeight: "800",
+    color: Colors.text,
+    flex: 1,
+  },
+  eloChip: {
+    backgroundColor: Colors.accent + "22",
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.accent + "44",
+  },
+  eloChipText: {
+    fontSize: FontSize.xs,
+    fontWeight: "800",
+    color: Colors.accent,
   },
   matchStatsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: Spacing.lg,
   },
   matchStatItem: {
     alignItems: "center",
   },
   matchStatValue: {
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.xl,
     fontWeight: "900",
     color: Colors.text,
-    lineHeight: 28,
+    lineHeight: 26,
   },
   matchStatLabel: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  eloRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  eloBox: {
-    flex: 1,
-    backgroundColor: Colors.darkTertiary,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    alignItems: "center",
-  },
-  eloValue: {
-    fontSize: FontSize.xl,
-    fontWeight: "900",
-    color: Colors.text,
-  },
-  eloLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
     fontWeight: "600",
   },
   matchStatsEmpty: {
@@ -952,5 +964,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: "center",
     lineHeight: 20,
+    paddingVertical: Spacing.sm,
   },
 });

@@ -890,6 +890,7 @@ export default function GameDetailScreen() {
                     ([user_id, team]) => ({ user_id, team })
                   );
                   const result = await recordMatch(
+                    game?.sport ?? "pickleball",
                     parseInt(team1Score) || 0,
                     parseInt(team2Score) || 0,
                     assignedPlayers,

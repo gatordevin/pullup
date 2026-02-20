@@ -80,6 +80,7 @@ export function useMatches(gameId: string | undefined) {
 
   const recordMatch = useCallback(
     async (
+      sport: string,
       team1Score: number,
       team2Score: number,
       players: { user_id: string; team: 1 | 2 }[],
@@ -93,6 +94,7 @@ export function useMatches(gameId: string | undefined) {
 
       const { error } = await supabase.rpc("record_match_and_update_stats", {
         p_game_id: gameId,
+        p_sport: sport,
         p_team1_score: team1Score,
         p_team2_score: team2Score,
         p_recorded_by: recordedBy,
