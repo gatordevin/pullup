@@ -8,9 +8,11 @@ interface SportIconProps {
   size?: number;
 }
 
-const SPORT_CONFIG = {
+const SPORT_CONFIG: Record<Sport, { emoji: string; bg: string }> = {
   pickleball: { emoji: "🏓", bg: Colors.accent },
   spikeball: { emoji: "🔵", bg: Colors.secondary },
+  volleyball: { emoji: "🏐", bg: Colors.accent },
+  running: { emoji: "🏃", bg: Colors.secondary },
 };
 
 export function SportIcon({ sport, size = 36 }: SportIconProps) {

@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   Pressable,
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -74,17 +75,23 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure?", [
-      { text: "Cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          router.replace("/(auth)/login");
+    if (Platform.OS === "web") {
+      if ((window as any).confirm("Sign Out\nAre you sure?")) {
+        signOut().then(() => router.replace("/(auth)/login"));
+      }
+    } else {
+      Alert.alert("Sign Out", "Are you sure?", [
+        { text: "Cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            await signOut();
+            router.replace("/(auth)/login");
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   if (loading) {

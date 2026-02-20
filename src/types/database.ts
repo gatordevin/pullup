@@ -37,7 +37,7 @@ export interface Database {
         Row: {
           id: string;
           display_name: string | null;
-          preferred_sport: "pickleball" | "spikeball" | null;
+          preferred_sport: "pickleball" | "spikeball" | "running" | "volleyball" | null;
           skill_level: "beginner" | "intermediate" | "advanced" | "any" | null;
           favorite_location_id: string | null;
           expo_push_token: string | null;
@@ -48,7 +48,7 @@ export interface Database {
         Insert: {
           id: string;
           display_name?: string | null;
-          preferred_sport?: "pickleball" | "spikeball" | null;
+          preferred_sport?: "pickleball" | "spikeball" | "running" | "volleyball" | null;
           skill_level?: "beginner" | "intermediate" | "advanced" | "any" | null;
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
@@ -59,7 +59,7 @@ export interface Database {
         Update: {
           id?: string;
           display_name?: string | null;
-          preferred_sport?: "pickleball" | "spikeball" | null;
+          preferred_sport?: "pickleball" | "spikeball" | "running" | "volleyball" | null;
           skill_level?: "beginner" | "intermediate" | "advanced" | "any" | null;
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
@@ -80,7 +80,7 @@ export interface Database {
         Row: {
           id: string;
           host_id: string;
-          sport: "pickleball" | "spikeball";
+          sport: "pickleball" | "spikeball" | "running" | "volleyball";
           skill_level: "beginner" | "intermediate" | "advanced" | "any";
           location_id: string | null;
           starts_at: string;
@@ -97,7 +97,7 @@ export interface Database {
         Insert: {
           id?: string;
           host_id: string;
-          sport: "pickleball" | "spikeball";
+          sport: "pickleball" | "spikeball" | "running" | "volleyball";
           skill_level?: "beginner" | "intermediate" | "advanced" | "any";
           location_id?: string | null;
           starts_at: string;
@@ -114,7 +114,7 @@ export interface Database {
         Update: {
           id?: string;
           host_id?: string;
-          sport?: "pickleball" | "spikeball";
+          sport?: "pickleball" | "spikeball" | "running" | "volleyball";
           skill_level?: "beginner" | "intermediate" | "advanced" | "any";
           location_id?: string | null;
           starts_at?: string;
@@ -221,7 +221,7 @@ export interface Database {
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
-      sport_type: "pickleball" | "spikeball";
+      sport_type: "pickleball" | "spikeball" | "running" | "volleyball";
       skill_level_type: "beginner" | "intermediate" | "advanced" | "any";
       game_status_type: "open" | "full" | "cancelled" | "completed";
       participant_status_type: "joined" | "left";

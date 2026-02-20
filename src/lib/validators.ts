@@ -24,15 +24,12 @@ export const otpSchema = z.object({
 
 export const onboardingSchema = z.object({
   display_name: z.string().min(2, "Name must be at least 2 characters").max(30),
-  preferred_sport: z.enum(["pickleball", "spikeball"]),
-  skill_level: z.enum(["beginner", "intermediate", "advanced", "any"]),
-  favorite_location_id: z.string().min(1, "Pick a favorite spot"),
 });
 
 export const createGameSchema = z.object({
-  sport: z.enum(["pickleball", "spikeball"]),
+  sport: z.enum(["pickleball", "spikeball", "running", "volleyball"]),
   skill_level: z.enum(["beginner", "intermediate", "advanced", "any"]),
-  location_id: z.string().min(1, "Select a location"),
+  location_id: z.string().optional(),
   starts_at: z.date({ message: "Pick a date and time" }),
   max_players: z.number().min(2, "At least 2 players").max(20, "Max 20 players"),
   notes: z.string().max(200).optional(),

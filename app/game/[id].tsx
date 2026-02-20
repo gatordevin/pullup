@@ -23,7 +23,7 @@ import { ChatInput } from "@/components/game/ChatInput";
 import { copyGameLink } from "@/lib/clipboard";
 import { formatGameTime, formatRelative } from "@/lib/datetime";
 import { supabase } from "@/lib/supabase";
-import { Colors, Gradient, FontSize, Spacing, BorderRadius } from "@/lib/constants";
+import { Colors, Gradient, FontSize, Spacing, BorderRadius, sportInfo, equipmentLabel as getEquipLabel } from "@/lib/constants";
 
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,26 +47,35 @@ export default function GameDetailScreen() {
   const progress =
     game.max_players > 0 ? game.current_players / game.max_players : 0;
 
+  const si = sportInfo(game.sport);
+
   const handleCancel = () => {
-    Alert.alert("Cancel Game", "Are you sure you want to cancel this game?", [
-      { text: "No" },
-      {
-        text: "Yes, cancel",
-        style: "destructive",
-        onPress: async () => {
-          await supabase
-            .from("games")
-            .update({ status: "cancelled" as const })
-            .eq("id", game.id);
-          router.back();
+    if (Platform.OS === "web") {
+      if ((window as any).confirm("Cancel Game\nAre you sure you want to cancel this game?")) {
+        supabase.from("games").update({ status: "cancelled" as const }).eq("id", game.id).then(() => router.back());
+      }
+    } else {
+      Alert.alert("Cancel Game", "Are you sure you want to cancel this game?", [
+        { text: "No" },
+        {
+          text: "Yes, cancel",
+          style: "destructive",
+          onPress: async () => {
+            await supabase.from("games").update({ status: "cancelled" as const }).eq("id", game.id);
+            router.back();
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const handleShare = async () => {
     await copyGameLink(game.id);
-    Alert.alert("Copied!", "Game link copied to clipboard");
+    if (Platform.OS === "web") {
+      (window as any).alert("Link copied to clipboard!");
+    } else {
+      Alert.alert("Copied!", "Game link copied to clipboard");
+    }
   };
 
   return (
@@ -88,12 +97,8 @@ export default function GameDetailScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               />
-              <Text style={styles.heroEmoji}>
-                {game.sport === "pickleball" ? "🏓" : "🔵"}
-              </Text>
-              <Text style={styles.heroTitle}>
-                {game.sport === "pickleball" ? "Pickleball" : "Spikeball"}
-              </Text>
+              <Text style={styles.heroEmoji}>{si.emoji}</Text>
+              <Text style={styles.heroTitle}>{si.label}</Text>
               <Text style={styles.heroTime}>
                 {formatRelative(game.starts_at)}
               </Text>
@@ -149,9 +154,7 @@ export default function GameDetailScreen() {
                   label="Gear"
                   value={[
                     game.has_equipment
-                      ? game.sport === "pickleball"
-                        ? "🏓 Has paddles"
-                        : "🔵 Has net"
+                      ? `${si.emoji} Has ${getEquipLabel(game.sport)}`
                       : null,
                     game.extra_equipment ? "🎁 Extras to share" : null,
                   ]

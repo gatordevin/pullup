@@ -70,14 +70,29 @@ export const BorderRadius = {
   full: 9999,
 } as const;
 
-export type Sport = "pickleball" | "spikeball";
+export type Sport = "pickleball" | "spikeball" | "running" | "volleyball";
 export type SkillLevel = "beginner" | "intermediate" | "advanced" | "any";
 export type GameStatus = "open" | "full" | "cancelled" | "completed";
 
 export const SPORTS: { value: Sport; label: string; emoji: string }[] = [
   { value: "pickleball", label: "Pickleball", emoji: "🏓" },
   { value: "spikeball", label: "Spikeball", emoji: "🔵" },
+  { value: "volleyball", label: "Volleyball", emoji: "🏐" },
+  { value: "running", label: "Running", emoji: "🏃" },
 ];
+
+export function sportInfo(sport: string) {
+  return SPORTS.find((s) => s.value === sport) ?? { emoji: "🎯", label: sport };
+}
+
+export function equipmentLabel(sport: string) {
+  switch (sport) {
+    case "pickleball": return "paddles";
+    case "spikeball": return "a net";
+    case "volleyball": return "a ball";
+    default: return "equipment";
+  }
+}
 
 export const SKILL_LEVELS: { value: SkillLevel; label: string }[] = [
   { value: "any", label: "Any Level" },

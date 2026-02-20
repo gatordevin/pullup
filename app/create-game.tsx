@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, createElement } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import {
   TextInput,
 } from "react-native";
 import { router } from "expo-router";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +27,13 @@ import {
   UF_LOCATIONS,
   Sport,
   SkillLevel,
+  equipmentLabel as getEquipLabel,
 } from "@/lib/constants";
+
+let DateTimePicker: any = null;
+if (Platform.OS !== "web") {
+  DateTimePicker = require("@react-native-community/datetimepicker").default;
+}
 
 const TIME_PRESETS = [
   { label: "Now", emoji: "🔥", minutes: 0 },
@@ -36,6 +41,26 @@ const TIME_PRESETS = [
   { label: "1 hour", emoji: "🕐", minutes: 60 },
   { label: "2 hours", emoji: "🕑", minutes: 120 },
 ];
+
+function crossAlert(title: string, message: string, onOk?: () => void) {
+  if (Platform.OS === "web") {
+    (window as any).alert(`${title}\n${message}`);
+    onOk?.();
+  } else {
+    Alert.alert(title, message, [{ text: "OK", onPress: onOk }]);
+  }
+}
+
+function crossConfirm(title: string, message: string, onConfirm: () => void) {
+  if (Platform.OS === "web") {
+    if ((window as any).confirm(`${title}\n${message}`)) onConfirm();
+  } else {
+    Alert.alert(title, message, [
+      { text: "Cancel" },
+      { text: "OK", style: "destructive", onPress: onConfirm },
+    ]);
+  }
+}
 
 export default function CreateGameScreen() {
   const { user } = useAuth();
@@ -61,11 +86,13 @@ export default function CreateGameScreen() {
     setStartsAt(now);
   };
 
+  const showsEquipment = sport !== "running";
+
   const handleCreate = async () => {
     if (!user) return;
 
     if (!courtFlexible && !locationId) {
-      Alert.alert("Pick a spot", "Select a court or turn on 'Any court works'");
+      crossAlert("Pick a spot", "Select a court or turn on 'Any court works'");
       return;
     }
 
@@ -93,7 +120,7 @@ export default function CreateGameScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert("Error", error.message);
+      crossAlert("Error", error.message);
       return;
     }
 
@@ -104,15 +131,19 @@ export default function CreateGameScreen() {
         .insert({ game_id: row.id, user_id: user.id, status: "joined" as const });
 
       await copyGameLink(row.id);
-      Alert.alert(
-        "Game posted!",
-        "Link copied — share it with your group!",
-        [{ text: "OK", onPress: () => router.back() }]
-      );
+      crossAlert("Game posted!", "Link copied — share it with your group!", () => {
+        router.back();
+      });
     }
   };
 
-  const equipmentLabel = sport === "pickleball" ? "paddles" : "a net";
+  const eqLabel = getEquipLabel(sport);
+
+  // Web datetime-local input helper
+  const toLocalDatetimeStr = (d: Date) => {
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
 
   return (
     <ScrollView
@@ -123,7 +154,7 @@ export default function CreateGameScreen() {
       <View style={styles.inner}>
         {/* ── Sport ─────────────────────────────── */}
         <Text style={styles.sectionLabel}>Sport</Text>
-        <View style={styles.sportRow}>
+        <View style={styles.sportGrid}>
           {SPORTS.map((s) => {
             const sel = sport === s.value;
             return (
@@ -137,7 +168,7 @@ export default function CreateGameScreen() {
                 style={({ pressed }) => [
                   styles.sportCard,
                   sel && styles.sportCardSel,
-                  pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
+                  pressed && { opacity: 0.8 },
                 ]}
               >
                 {sel && (
@@ -179,7 +210,7 @@ export default function CreateGameScreen() {
         </View>
 
         {/* ── Skill Level ──────────────────────── */}
-        <Text style={styles.sectionLabel}>Skill level</Text>
+        <Text style={styles.sectionLabel}>Looking for</Text>
         <View style={styles.chipRow}>
           {SKILL_LEVELS.map((s) => {
             const sel = skillLevel === s.value;
@@ -221,48 +252,62 @@ export default function CreateGameScreen() {
             }}
             style={[styles.chip, timePreset === null && styles.chipSel]}
           >
-            <Text
-              style={[styles.chipText, timePreset === null && styles.chipTextSel]}
-            >
+            <Text style={[styles.chipText, timePreset === null && styles.chipTextSel]}>
               📅 Pick time
             </Text>
           </Pressable>
         </View>
 
-        {timePreset === null && (
+        {/* Web datetime picker */}
+        {timePreset === null && Platform.OS === "web" && (
+          <View style={styles.webDateRow}>
+            {createElement("input", {
+              type: "datetime-local",
+              value: toLocalDatetimeStr(startsAt),
+              min: toLocalDatetimeStr(new Date()),
+              onChange: (e: any) => {
+                const val = e.target.value;
+                if (val) setStartsAt(new Date(val));
+              },
+              style: {
+                backgroundColor: Colors.darkCard,
+                color: Colors.text,
+                border: `1px solid ${Colors.border}`,
+                borderRadius: 12,
+                padding: "12px 16px",
+                fontSize: 16,
+                width: "100%",
+                outline: "none",
+                fontFamily: "inherit",
+              },
+            })}
+          </View>
+        )}
+
+        {/* Native date/time pickers */}
+        {timePreset === null && Platform.OS !== "web" && (
           <View style={styles.dateRow}>
-            <Pressable
-              onPress={() => Platform.OS !== "web" && setShowDatePicker(true)}
-              style={styles.datePill}
-            >
+            <Pressable onPress={() => setShowDatePicker(true)} style={styles.datePill}>
               <Text style={styles.datePillText}>
                 {startsAt.toLocaleDateString(undefined, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
+                  weekday: "short", month: "short", day: "numeric",
                 })}
               </Text>
             </Pressable>
-            <Pressable
-              onPress={() => Platform.OS !== "web" && setShowTimePicker(true)}
-              style={styles.datePill}
-            >
+            <Pressable onPress={() => setShowTimePicker(true)} style={styles.datePill}>
               <Text style={styles.datePillText}>
-                {startsAt.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {startsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </Text>
             </Pressable>
           </View>
         )}
 
-        {showDatePicker && Platform.OS !== "web" && (
+        {showDatePicker && DateTimePicker && (
           <DateTimePicker
             value={startsAt}
             mode="date"
             minimumDate={new Date()}
-            onChange={(_, date) => {
+            onChange={(_: any, date: Date | undefined) => {
               setShowDatePicker(Platform.OS === "ios");
               if (date) {
                 const u = new Date(startsAt);
@@ -272,11 +317,11 @@ export default function CreateGameScreen() {
             }}
           />
         )}
-        {showTimePicker && Platform.OS !== "web" && (
+        {showTimePicker && DateTimePicker && (
           <DateTimePicker
             value={startsAt}
             mode="time"
-            onChange={(_, date) => {
+            onChange={(_: any, date: Date | undefined) => {
               setShowTimePicker(Platform.OS === "ios");
               if (date) {
                 const u = new Date(startsAt);
@@ -338,37 +383,37 @@ export default function CreateGameScreen() {
         </View>
 
         {/* ── Equipment ────────────────────────── */}
-        <Text style={styles.sectionLabel}>Equipment</Text>
-        <View style={styles.equipCard}>
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>I have {equipmentLabel}</Text>
-              <Text style={styles.toggleHint}>You'll bring your own gear</Text>
+        {showsEquipment && (
+          <>
+            <Text style={styles.sectionLabel}>Equipment</Text>
+            <View style={styles.equipCard}>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleInfo}>
+                  <Text style={styles.toggleLabel}>I have {eqLabel}</Text>
+                  <Text style={styles.toggleHint}>You'll bring your own gear</Text>
+                </View>
+                <Switch
+                  value={hasEquipment}
+                  onValueChange={setHasEquipment}
+                  trackColor={{ false: Colors.darkTertiary, true: Colors.accent + "60" }}
+                  thumbColor={hasEquipment ? Colors.accent : "#636366"}
+                />
+              </View>
+              <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
+                <View style={styles.toggleInfo}>
+                  <Text style={styles.toggleLabel}>I have extras to share</Text>
+                  <Text style={styles.toggleHint}>Extra gear for others</Text>
+                </View>
+                <Switch
+                  value={extraEquipment}
+                  onValueChange={setExtraEquipment}
+                  trackColor={{ false: Colors.darkTertiary, true: Colors.accent + "60" }}
+                  thumbColor={extraEquipment ? Colors.accent : "#636366"}
+                />
+              </View>
             </View>
-            <Switch
-              value={hasEquipment}
-              onValueChange={setHasEquipment}
-              trackColor={{ false: Colors.darkTertiary, true: Colors.accent + "60" }}
-              thumbColor={hasEquipment ? Colors.accent : "#636366"}
-            />
-          </View>
-          <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>I have extras to share</Text>
-              <Text style={styles.toggleHint}>
-                {sport === "pickleball"
-                  ? "Extra paddles for other players"
-                  : "Extra gear for others to use"}
-              </Text>
-            </View>
-            <Switch
-              value={extraEquipment}
-              onValueChange={setExtraEquipment}
-              trackColor={{ false: Colors.darkTertiary, true: Colors.accent + "60" }}
-              thumbColor={extraEquipment ? Colors.accent : "#636366"}
-            />
-          </View>
-        </View>
+          </>
+        )}
 
         {/* ── Notes ────────────────────────────── */}
         <Text style={styles.sectionLabel}>
@@ -410,7 +455,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
 
-  /* Section headers */
   sectionLabel: {
     fontSize: 13,
     fontWeight: "600",
@@ -420,19 +464,20 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     marginTop: Spacing.xxl,
   },
-  optional: {
-    textTransform: "none",
-    fontWeight: "400",
-    letterSpacing: 0,
-  },
+  optional: { textTransform: "none", fontWeight: "400", letterSpacing: 0 },
 
-  /* Sport cards */
-  sportRow: { flexDirection: "row", gap: Spacing.md },
+  /* Sport 2x2 grid */
+  sportGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
   sportCard: {
-    flex: 1,
+    flexBasis: "48%",
+    flexGrow: 1,
     alignItems: "center",
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.darkCard,
     borderWidth: 1.5,
@@ -440,9 +485,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   sportCardSel: { borderColor: Colors.accent },
-  sportEmoji: { fontSize: 40, marginBottom: Spacing.sm },
+  sportEmoji: { fontSize: 32, marginBottom: Spacing.xs },
   sportLabel: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
     fontWeight: "700",
     color: Colors.textSecondary,
   },
@@ -457,28 +502,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   stepperBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 52, height: 52, borderRadius: 26,
     backgroundColor: Colors.darkCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderWidth: 1, borderColor: Colors.border,
+    alignItems: "center", justifyContent: "center",
   },
-  stepperBtnText: {
-    fontSize: 28,
-    color: Colors.text,
-    fontWeight: "500",
-    lineHeight: 30,
-  },
+  stepperBtnText: { fontSize: 28, color: Colors.text, fontWeight: "500", lineHeight: 30 },
   stepperValue: { alignItems: "center", minWidth: 80 },
-  stepperNum: {
-    fontSize: 40,
-    fontWeight: "800",
-    color: Colors.text,
-    fontVariant: ["tabular-nums"],
-  },
+  stepperNum: { fontSize: 40, fontWeight: "800", color: Colors.text, fontVariant: ["tabular-nums"] },
   stepperUnit: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
 
   /* Chips */
@@ -488,33 +519,26 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.darkCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.border,
   },
   chipSel: {
     backgroundColor: Colors.accent + "18",
     borderColor: Colors.accent + "80",
   },
-  chipText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: "500",
-  },
+  chipText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: "500" },
   chipTextSel: { color: Colors.accent, fontWeight: "600" },
 
   /* Date row */
   dateRow: { flexDirection: "row", gap: Spacing.md, marginTop: Spacing.md },
   datePill: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    flex: 1, paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
     backgroundColor: Colors.darkCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.border,
     alignItems: "center",
   },
   datePillText: { color: Colors.text, fontSize: FontSize.sm, fontWeight: "500" },
+  webDateRow: { marginTop: Spacing.md },
 
   /* Toggles */
   toggleRow: {
@@ -527,26 +551,18 @@ const styles = StyleSheet.create({
   },
   toggleInfo: { flex: 1, marginRight: Spacing.md },
   toggleLabel: { fontSize: FontSize.md, color: Colors.text, fontWeight: "500" },
-  toggleHint: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
+  toggleHint: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
 
-  /* Equipment card */
   equipCard: {
     backgroundColor: Colors.darkCard,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.border,
   },
 
-  /* Notes */
   notesInput: {
     backgroundColor: Colors.darkCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.border,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     fontSize: FontSize.md,
@@ -555,6 +571,5 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
 
-  /* Submit */
   submitArea: { marginTop: Spacing.xxxl, paddingBottom: Spacing.xxl },
 });

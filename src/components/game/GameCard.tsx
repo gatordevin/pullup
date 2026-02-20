@@ -8,6 +8,8 @@ import {
   FontSize,
   Spacing,
   BorderRadius,
+  sportInfo,
+  equipmentLabel as getEquipLabel,
 } from "@/lib/constants";
 import { formatGameTime, formatRelative } from "@/lib/datetime";
 import type { GameWithLocation } from "@/types/database";
@@ -21,6 +23,7 @@ export function GameCard({ game }: GameCardProps) {
     game.max_players > 0 ? game.current_players / game.max_players : 0;
   const isFull = game.current_players >= game.max_players;
   const spotsLeft = game.max_players - game.current_players;
+  const si = sportInfo(game.sport);
 
   return (
     <Pressable
@@ -30,12 +33,8 @@ export function GameCard({ game }: GameCardProps) {
       {/* Top: sport + relative time */}
       <View style={styles.topRow}>
         <View style={styles.sportBadge}>
-          <Text style={styles.sportEmoji}>
-            {game.sport === "pickleball" ? "🏓" : "🔵"}
-          </Text>
-          <Text style={styles.sportName}>
-            {game.sport === "pickleball" ? "Pickleball" : "Spikeball"}
-          </Text>
+          <Text style={styles.sportEmoji}>{si.emoji}</Text>
+          <Text style={styles.sportName}>{si.label}</Text>
         </View>
         <Text style={styles.relTime}>{formatRelative(game.starts_at)}</Text>
       </View>
@@ -67,7 +66,7 @@ export function GameCard({ game }: GameCardProps) {
         {game.has_equipment && (
           <View style={styles.tag}>
             <Text style={styles.tagText}>
-              {game.sport === "pickleball" ? "🏓 Has paddles" : "🔵 Has net"}
+              {si.emoji} Has {getEquipLabel(game.sport)}
             </Text>
           </View>
         )}
