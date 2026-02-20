@@ -19,6 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGame } from "@/hooks/useGame";
 import { useGameChat } from "@/hooks/useGameChat";
+import { useMatches } from "@/hooks/useMatches";
 import { JoinButton } from "@/components/game/JoinButton";
 import { RosterList } from "@/components/game/RosterList";
 import { ChatMessage } from "@/components/game/ChatMessage";
@@ -74,6 +75,14 @@ export default function GameDetailScreen() {
   const { messages, sendMessage } = useGameChat(id!);
   const chatListRef = useRef<FlatList>(null);
 
+  // Match recording
+  const { matches, fetchMatches, recordMatch } = useMatches(id);
+  const [showRecordMatch, setShowRecordMatch] = useState(false);
+  const [team1Score, setTeam1Score] = useState("0");
+  const [team2Score, setTeam2Score] = useState("0");
+  const [teamAssignments, setTeamAssignments] = useState<Record<string, 1 | 2>>({});
+  const [savingMatch, setSavingMatch] = useState(false);
+
   // Guest prompt state
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
   const [guestName, setGuestName] = useState("");
@@ -92,6 +101,11 @@ export default function GameDetailScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showBigCode, setShowBigCode] = useState(false);
+
+  // Fetch matches when game loads
+  useEffect(() => {
+    if (id) fetchMatches();
+  }, [id, fetchMatches]);
 
   // Scroll chat to bottom when new messages arrive
   useEffect(() => {
@@ -597,6 +611,17 @@ export default function GameDetailScreen() {
             {isHost && !editing && (
               <ActionChip label="✏️ Edit" onPress={startEdit} />
             )}
+            {hasJoined && (
+              <ActionChip
+                label="📊 Record Match"
+                onPress={() => {
+                  setTeamAssignments({});
+                  setTeam1Score("0");
+                  setTeam2Score("0");
+                  setShowRecordMatch(true);
+                }}
+              />
+            )}
             {isHost && (
               <ActionChip
                 label="Cancel Game"
@@ -607,6 +632,41 @@ export default function GameDetailScreen() {
           </View>
 
           <RosterList participants={participants} hostId={game.host_id} />
+
+          {/* ═══ MATCH HISTORY ═══ */}
+          {matches.length > 0 && (
+            <View style={styles.matchSection}>
+              <Text style={styles.matchSectionTitle}>Match History ({matches.length})</Text>
+              {matches.slice(0, 5).map((match) => {
+                const team1 = match.players.filter((p) => p.team === 1);
+                const team2 = match.players.filter((p) => p.team === 2);
+                const team1Win = match.team1_score > match.team2_score;
+                const team2Win = match.team2_score > match.team1_score;
+                return (
+                  <View key={match.id} style={styles.matchCard}>
+                    <View style={styles.matchRow}>
+                      <View style={[styles.matchTeam, team1Win && styles.matchTeamWin]}>
+                        <Text style={styles.matchTeamLabel}>{team1Win ? "🏆 " : ""}Team 1</Text>
+                        <Text style={styles.matchScore}>{match.team1_score}</Text>
+                        <Text style={styles.matchPlayers} numberOfLines={1}>
+                          {team1.map((p) => p.profile?.display_name ?? "Player").join(", ") || "—"}
+                        </Text>
+                      </View>
+                      <Text style={styles.matchVs}>vs</Text>
+                      <View style={[styles.matchTeam, team2Win && styles.matchTeamWin]}>
+                        <Text style={styles.matchTeamLabel}>{team2Win ? "🏆 " : ""}Team 2</Text>
+                        <Text style={styles.matchScore}>{match.team2_score}</Text>
+                        <Text style={styles.matchPlayers} numberOfLines={1}>
+                          {team2.map((p) => p.profile?.display_name ?? "Player").join(", ") || "—"}
+                        </Text>
+                      </View>
+                    </View>
+                    {match.notes ? <Text style={styles.matchNotes}>{match.notes}</Text> : null}
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* ═══ INLINE CHAT ═══ */}
           {canChat && (
@@ -678,6 +738,115 @@ export default function GameDetailScreen() {
           <Text style={styles.bigCodeHint}>Scan to join this game</Text>
           <Text style={styles.bigCodeDismiss}>Tap anywhere to dismiss</Text>
         </Pressable>
+      </Modal>
+
+      {/* ═══ RECORD MATCH MODAL ═══ */}
+      <Modal
+        visible={showRecordMatch}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowRecordMatch(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { maxHeight: "85%" }]}>
+            <Text style={styles.modalTitle}>📊 Record Match</Text>
+
+            {/* Score inputs */}
+            <View style={styles.scoreRow}>
+              <View style={styles.scoreBox}>
+                <Text style={styles.scoreLabel}>Team 1</Text>
+                <TextInput
+                  style={styles.scoreInput}
+                  keyboardType="number-pad"
+                  value={team1Score}
+                  onChangeText={setTeam1Score}
+                  maxLength={2}
+                  selectTextOnFocus
+                />
+              </View>
+              <Text style={styles.scoreVs}>—</Text>
+              <View style={styles.scoreBox}>
+                <Text style={styles.scoreLabel}>Team 2</Text>
+                <TextInput
+                  style={styles.scoreInput}
+                  keyboardType="number-pad"
+                  value={team2Score}
+                  onChangeText={setTeam2Score}
+                  maxLength={2}
+                  selectTextOnFocus
+                />
+              </View>
+            </View>
+
+            {/* Player team assignment */}
+            <Text style={styles.assignTitle}>Assign Players to Teams</Text>
+            <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+              {participants.map((p) => {
+                const assigned = teamAssignments[p.user_id];
+                return (
+                  <View key={p.user_id} style={styles.assignRow}>
+                    <Text style={styles.assignName} numberOfLines={1}>
+                      {p.profile?.display_name ?? "Player"}
+                    </Text>
+                    <View style={styles.teamBtns}>
+                      <Pressable
+                        style={[styles.teamBtn, assigned === 1 && styles.teamBtnActive1]}
+                        onPress={() =>
+                          setTeamAssignments((prev) => ({ ...prev, [p.user_id]: 1 }))
+                        }
+                      >
+                        <Text style={[styles.teamBtnText, assigned === 1 && styles.teamBtnTextActive]}>T1</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[styles.teamBtn, assigned === 2 && styles.teamBtnActive2]}
+                        onPress={() =>
+                          setTeamAssignments((prev) => ({ ...prev, [p.user_id]: 2 }))
+                        }
+                      >
+                        <Text style={[styles.teamBtnText, assigned === 2 && styles.teamBtnTextActive]}>T2</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <Pressable
+                style={styles.modalCancel}
+                onPress={() => setShowRecordMatch(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalConfirm, savingMatch && { opacity: 0.6 }]}
+                disabled={savingMatch}
+                onPress={async () => {
+                  setSavingMatch(true);
+                  const assignedPlayers = Object.entries(teamAssignments).map(
+                    ([user_id, team]) => ({ user_id, team })
+                  );
+                  const result = await recordMatch(
+                    parseInt(team1Score) || 0,
+                    parseInt(team2Score) || 0,
+                    assignedPlayers,
+                    user?.id ?? "unknown"
+                  );
+                  setSavingMatch(false);
+                  if (!result.error) {
+                    setShowRecordMatch(false);
+                  }
+                }}
+              >
+                {savingMatch ? (
+                  <ActivityIndicator size="small" color={Colors.dark} />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Save Match</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* ═══ GUEST PROMPT MODAL ═══ */}
@@ -1341,5 +1510,187 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.accent,
     fontWeight: "500",
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    color: Colors.textSecondary,
+    fontWeight: "600",
+    fontSize: FontSize.sm,
+  },
+  modalConfirm: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.accent,
+    alignItems: "center",
+  },
+  modalConfirmText: {
+    color: Colors.dark,
+    fontWeight: "700",
+    fontSize: FontSize.sm,
+  },
+
+  /* Match history */
+  matchSection: {
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  matchSectionTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+  },
+  matchCard: {
+    backgroundColor: Colors.darkCard,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  matchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  matchTeam: {
+    flex: 1,
+    alignItems: "center",
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  matchTeamWin: {
+    backgroundColor: Colors.accent + "15",
+  },
+  matchTeamLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  matchScore: {
+    fontSize: FontSize.xxxl,
+    fontWeight: "900",
+    color: Colors.text,
+    lineHeight: 38,
+  },
+  matchPlayers: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+    textAlign: "center",
+  },
+  matchVs: {
+    fontSize: FontSize.md,
+    color: Colors.textMuted,
+    fontWeight: "700",
+    marginHorizontal: Spacing.sm,
+  },
+  matchNotes: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: Spacing.xs,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+
+  /* Record match modal */
+  scoreRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: Spacing.lg,
+    gap: Spacing.lg,
+  },
+  scoreBox: {
+    alignItems: "center",
+  },
+  scoreLabel: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: "700",
+    marginBottom: Spacing.xs,
+  },
+  scoreInput: {
+    width: 72,
+    height: 72,
+    backgroundColor: Colors.darkInput,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    textAlign: "center",
+    fontSize: FontSize.xxxl,
+    fontWeight: "900",
+    color: Colors.text,
+  },
+  scoreVs: {
+    fontSize: FontSize.xl,
+    color: Colors.textMuted,
+    fontWeight: "700",
+  },
+  assignTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  assignRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  assignName: {
+    flex: 1,
+    fontSize: FontSize.md,
+    color: Colors.text,
+    marginRight: Spacing.sm,
+  },
+  teamBtns: {
+    flexDirection: "row",
+    gap: Spacing.xs,
+  },
+  teamBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.darkTertiary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  teamBtnActive1: {
+    backgroundColor: Colors.accent + "33",
+    borderColor: Colors.accent,
+  },
+  teamBtnActive2: {
+    backgroundColor: "#4A90E233",
+    borderColor: "#4A90E2",
+  },
+  teamBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+  },
+  teamBtnTextActive: {
+    color: Colors.text,
   },
 });
