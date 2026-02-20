@@ -36,6 +36,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: "Leaderboard",
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 22, color }}>🏆</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="map"
         options={{
           href: null,
