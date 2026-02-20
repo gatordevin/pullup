@@ -39,6 +39,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (existing) {
+      // Auto-onboard existing non-onboarded profiles
+      if (!(existing as Profile).onboarded) {
+        const name = (existing as Profile).display_name ??
+          clerkUser?.firstName ??
+          clerkUser?.primaryEmailAddress?.emailAddress?.split("@")[0] ??
+          "Player";
+        await supabase.from("profiles").update({ onboarded: true, display_name: name }).eq("id", userId);
+        setProfile({ ...(existing as Profile), onboarded: true, display_name: name });
+        setProfileLoading(false);
+        return;
+      }
       setProfile(existing as Profile);
     } else {
       // Create profile for new Clerk user
@@ -52,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .insert({
           id: userId,
           display_name: displayName,
+          onboarded: true,
         })
         .select("*")
         .single();
