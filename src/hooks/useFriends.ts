@@ -95,6 +95,36 @@ export function useFriends(userId: string | undefined) {
     setLoading(false);
   }, [userId]);
 
+  const sendRequestById = useCallback(
+    async (targetId: string): Promise<{ error?: string }> => {
+      if (!userId) return { error: "Not logged in" };
+      if (targetId === userId) return { error: "You can't add yourself" };
+
+      const { data: existing } = await supabase
+        .from("friendships")
+        .select("id, status")
+        .or(
+          `and(requester_id.eq.${userId},addressee_id.eq.${targetId}),and(requester_id.eq.${targetId},addressee_id.eq.${userId})`
+        )
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        const status = (existing[0] as any).status;
+        if (status === "accepted") return { error: "Already friends" };
+        if (status === "pending") return { error: "Request already pending" };
+      }
+
+      const { error } = await supabase.from("friendships").insert({
+        requester_id: userId,
+        addressee_id: targetId,
+      });
+
+      if (error) return { error: error.message };
+      return {};
+    },
+    [userId]
+  );
+
   const sendRequest = useCallback(
     async (email: string): Promise<{ error?: string }> => {
       if (!userId) return { error: "Not logged in" };
@@ -167,6 +197,7 @@ export function useFriends(userId: string | undefined) {
     loading,
     fetchFriends,
     sendRequest,
+    sendRequestById,
     acceptRequest,
     declineRequest,
     removeFriend,

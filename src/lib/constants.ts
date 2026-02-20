@@ -72,7 +72,7 @@ export const BorderRadius = {
 
 export type Sport = "pickleball" | "spikeball" | "running" | "volleyball";
 export type SkillLevel = "beginner" | "intermediate" | "advanced" | "any";
-export type GameStatus = "open" | "full" | "cancelled" | "completed";
+export type GameStatus = "open" | "full" | "started" | "cancelled" | "completed";
 
 export const SPORTS: { value: Sport; label: string; emoji: string }[] = [
   { value: "pickleball", label: "Pickleball", emoji: "🏓" },
@@ -134,4 +134,8 @@ export function getGameCode(id: string): string {
 
 export function getGameUrl(id: string): string {
   return `${APP_URL}/game/${id}`;
+}
+
+export function getInviteUrl(userId: string): string {
+  return `${APP_URL}/add-friend/${userId}`;
 }

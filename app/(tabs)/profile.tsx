@@ -18,8 +18,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { Avatar } from "@/components/ui/Avatar";
 import { GameCard } from "@/components/game/GameCard";
 import { useFriends } from "@/hooks/useFriends";
+import { usePlayerStats } from "@/hooks/usePlayerStats";
 import QRCode from "react-native-qrcode-svg";
 import { supabase } from "@/lib/supabase";
+import * as Clipboard from "expo-clipboard";
 import {
   Colors,
   Gradient,
@@ -30,6 +32,8 @@ import {
   SKILL_LEVELS,
   UF_LOCATIONS,
   APP_URL,
+  getInviteUrl,
+  sportInfo,
 } from "@/lib/constants";
 import type { GameWithLocation } from "@/types/database";
 
@@ -47,6 +51,7 @@ export default function ProfileScreen() {
   const [friendError, setFriendError] = useState<string | null>(null);
   const [friendSuccess, setFriendSuccess] = useState<string | null>(null);
   const [addingFriend, setAddingFriend] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const {
     friends,
     incomingRequests,
@@ -56,12 +61,14 @@ export default function ProfileScreen() {
     declineRequest,
     removeFriend,
   } = useFriends(user?.id);
+  const { statsBySport, totals, fetchStats: fetchPlayerStats } = usePlayerStats(user?.id);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchMyGames();
       fetchStats();
+      fetchPlayerStats();
       if (!isGuest) fetchFriends();
     } else {
       setGamesLoading(false);
@@ -282,6 +289,60 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Match Stats — per sport */}
+        {statsBySport.length > 0 && (
+          <View style={{ marginBottom: Spacing.lg, paddingHorizontal: Spacing.lg }}>
+            <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
+            {statsBySport.map((s) => {
+              const sport = sportInfo(s.sport);
+              const winPct = s.matches_played > 0
+                ? Math.round((s.wins / s.matches_played) * 100)
+                : 0;
+              return (
+                <View key={s.sport} style={styles.matchStatsCard}>
+                  <View style={styles.statsCardHeader}>
+                    <Text style={styles.statsCardEmoji}>{sport.emoji}</Text>
+                    <Text style={styles.statsCardSport}>{sport.label}</Text>
+                    <View style={styles.eloChip}>
+                      <Text style={styles.eloChipText}>{s.elo_rating} ELO</Text>
+                    </View>
+                  </View>
+                  <View style={styles.matchStatsRow}>
+                    <View style={styles.matchStatItem}>
+                      <Text style={styles.matchStatValue}>{s.matches_played}</Text>
+                      <Text style={styles.matchStatLabel}>Played</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={[styles.matchStatValue, { color: Colors.success }]}>{s.wins}</Text>
+                      <Text style={styles.matchStatLabel}>Wins</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={[styles.matchStatValue, { color: Colors.error }]}>{s.losses}</Text>
+                      <Text style={styles.matchStatLabel}>Losses</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={styles.matchStatValue}>{winPct}%</Text>
+                      <Text style={styles.matchStatLabel}>Win %</Text>
+                    </View>
+                    <View style={styles.matchStatItem}>
+                      <Text style={[styles.matchStatValue, { color: Colors.accent }]}>{s.highest_elo}</Text>
+                      <Text style={styles.matchStatLabel}>Peak</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Show placeholder if no matches yet */}
+        {statsBySport.length === 0 && user && !isGuest && (
+          <View style={[styles.matchStatsCard, { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg }]}>
+            <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
+            <Text style={styles.matchStatsEmpty}>No matches recorded yet. Join a game and record your first match!</Text>
+          </View>
+        )}
+
         {/* My Games */}
         <Text style={styles.sectionTitle}>My Games</Text>
         {gamesLoading ? (
@@ -356,9 +417,32 @@ export default function ProfileScreen() {
               ))
             )}
 
+            {/* Invite link */}
+            <Pressable
+              onPress={async () => {
+                if (!user) return;
+                await Clipboard.setStringAsync(getInviteUrl(user.id));
+                setInviteCopied(true);
+                setTimeout(() => setInviteCopied(false), 2500);
+              }}
+              style={({ pressed }) => [
+                styles.inviteBtn,
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Text style={styles.inviteBtnText}>
+                {inviteCopied ? "✓ Link Copied!" : "🔗 Copy Invite Link"}
+              </Text>
+              <Text style={styles.inviteBtnSub}>
+                {inviteCopied
+                  ? "Paste it anywhere to share"
+                  : "Friends open it to add you instantly"}
+              </Text>
+            </Pressable>
+
             {/* Add friend */}
             <View style={styles.addFriendCard}>
-              <Text style={styles.addFriendTitle}>Add Friend</Text>
+              <Text style={styles.addFriendTitle}>Add Friend by Email</Text>
               <View style={styles.addFriendRow}>
                 <TextInput
                   style={styles.addFriendInput}
@@ -678,6 +762,26 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.dark,
   },
+  inviteBtn: {
+    marginTop: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.accent + "18",
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.accent + "40",
+  },
+  inviteBtnText: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+    color: Colors.accent,
+  },
+  inviteBtnSub: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
   addFriendCard: {
     marginTop: Spacing.lg,
     marginHorizontal: Spacing.lg,
@@ -791,5 +895,75 @@ const styles = StyleSheet.create({
     color: Colors.error,
     fontSize: FontSize.sm,
     fontWeight: "600",
+  },
+  matchStatsCard: {
+    backgroundColor: Colors.darkCard,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  matchStatsSectionTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+  },
+  statsCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  statsCardEmoji: {
+    fontSize: 22,
+  },
+  statsCardSport: {
+    fontSize: FontSize.md,
+    fontWeight: "800",
+    color: Colors.text,
+    flex: 1,
+  },
+  eloChip: {
+    backgroundColor: Colors.accent + "22",
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.accent + "44",
+  },
+  eloChipText: {
+    fontSize: FontSize.xs,
+    fontWeight: "800",
+    color: Colors.accent,
+  },
+  matchStatsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  matchStatItem: {
+    alignItems: "center",
+  },
+  matchStatValue: {
+    fontSize: FontSize.xl,
+    fontWeight: "900",
+    color: Colors.text,
+    lineHeight: 26,
+  },
+  matchStatLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 1,
+    fontWeight: "600",
+  },
+  matchStatsEmpty: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    textAlign: "center",
+    lineHeight: 20,
+    paddingVertical: Spacing.sm,
   },
 });
