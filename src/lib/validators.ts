@@ -1,12 +1,8 @@
 import { z } from "zod/v4";
-import { UF_EMAIL_DOMAIN } from "./constants";
 
 export const emailSchema = z
   .string()
-  .email("Enter a valid email address")
-  .refine((email) => email.endsWith(UF_EMAIL_DOMAIN), {
-    message: "Must use a @ufl.edu email address",
-  });
+  .email("Enter a valid email address");
 
 export const passwordSchema = z
   .string()

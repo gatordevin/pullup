@@ -1,15 +1,17 @@
 // PullUp Brand — Dark mode + Nano Banana gradient
 export const Colors = {
   // Gradient endpoints
-  gradientStart: "#FFD60A", // Electric neon yellow
-  gradientEnd: "#FF9500", // Warm intense orange
-  // Solid accent (midpoint of gradient, for non-gradient contexts)
+  gradientStart: "#FFD60A",
+  gradientEnd: "#FF9500",
+  // Solid accent (midpoint)
   accent: "#FFB800",
+  accentLight: "#FFD60A",
   // Dark surfaces
-  dark: "#1C1C1E", // Primary background
-  darkElevated: "#2C2C2E", // Cards, elevated surfaces
-  darkTertiary: "#3A3A3C", // Borders, dividers
-  darkInput: "#1E1E20", // Input fields
+  dark: "#0D0D0F",
+  darkElevated: "#1A1A1E",
+  darkCard: "#222226",
+  darkTertiary: "#2E2E33",
+  darkInput: "#18181C",
   // Text on dark
   text: "#FFFFFF",
   textSecondary: "#A1A1A6",
@@ -21,20 +23,20 @@ export const Colors = {
   // Utility
   white: "#FFFFFF",
   black: "#000000",
-  overlay: "rgba(0,0,0,0.6)",
-  // Legacy aliases (keeps components compiling during transition)
+  overlay: "rgba(0,0,0,0.7)",
+  // Aliases
   primary: "#FFB800",
   secondary: "#FF9500",
-  background: "#1C1C1E",
-  card: "#2C2C2E",
-  border: "#3A3A3C",
+  background: "#0D0D0F",
+  card: "#1A1A1E",
+  border: "#2E2E33",
 } as const;
 
 export const Gradient = {
-  // The signature yellow→orange "Nano Banana" gradient
   brand: ["#FFD60A", "#FF9500"] as const,
-  // Subtle dark gradient for backgrounds
-  darkSurface: ["#1C1C1E", "#121214"] as const,
+  brandSubtle: ["rgba(255,214,10,0.15)", "rgba(255,149,0,0.05)"] as const,
+  darkSurface: ["#0D0D0F", "#0A0A0C"] as const,
+  cardShine: ["rgba(255,255,255,0.06)", "rgba(255,255,255,0)"] as const,
 };
 
 export const Spacing = {
@@ -56,14 +58,14 @@ export const FontSize = {
   xl: 20,
   xxl: 24,
   xxxl: 32,
-  display: 40,
+  display: 44,
 } as const;
 
 export const BorderRadius = {
-  sm: 6,
-  md: 10,
-  lg: 14,
-  xl: 20,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 22,
   xxl: 28,
   full: 9999,
 } as const;
@@ -100,5 +102,3 @@ export const UF_CAMPUS_CENTER = {
   latitudeDelta: 0.025,
   longitudeDelta: 0.025,
 };
-
-export const UF_EMAIL_DOMAIN = "@ufl.edu";

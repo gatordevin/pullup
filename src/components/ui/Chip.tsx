@@ -1,5 +1,5 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { Pressable, Text, StyleSheet } from "react-native";
 import { Colors, BorderRadius, FontSize, Spacing } from "@/lib/constants";
 
 interface ChipProps {
@@ -10,13 +10,16 @@ interface ChipProps {
 
 export function Chip({ label, selected = false, onPress }: ChipProps) {
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      style={[styles.chip, selected && styles.selected]}
-      activeOpacity={0.7}
+      style={({ pressed }) => [
+        styles.chip,
+        selected && styles.selected,
+        pressed && { opacity: 0.7 },
+      ]}
     >
       <Text style={[styles.text, selected && styles.selectedText]}>{label}</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -25,15 +28,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.darkElevated,
+    backgroundColor: Colors.darkCard,
     borderWidth: 1,
-    borderColor: Colors.darkTertiary,
+    borderColor: Colors.border,
     marginRight: Spacing.sm,
     marginBottom: Spacing.sm,
   },
   selected: {
-    backgroundColor: Colors.accent + "20",
-    borderColor: Colors.accent,
+    backgroundColor: Colors.accent + "18",
+    borderColor: Colors.accent + "80",
   },
   text: {
     fontSize: FontSize.sm,

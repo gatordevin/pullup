@@ -6,16 +6,18 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
 import { useProfile } from "@/hooks/useProfile";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button } from "@/components/ui/Button";
 import { GameCard } from "@/components/game/GameCard";
 import { supabase } from "@/lib/supabase";
 import {
   Colors,
+  Gradient,
   FontSize,
   Spacing,
   BorderRadius,
@@ -98,10 +100,14 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Profile Card */}
+      {/* Profile header with gradient accent */}
       <View style={styles.profileCard}>
-        <Avatar name={profile?.display_name ?? null} size={72} />
-        <Text style={styles.name}>{profile?.display_name ?? "Gator"}</Text>
+        <LinearGradient
+          colors={[...Gradient.brandSubtle]}
+          style={styles.profileGlow}
+        />
+        <Avatar name={profile?.display_name ?? null} size={80} />
+        <Text style={styles.name}>{profile?.display_name ?? "Player"}</Text>
         <Text style={styles.email}>{user?.email}</Text>
 
         <View style={styles.tags}>
@@ -128,21 +134,20 @@ export default function ProfileScreen() {
       {/* My Games */}
       <Text style={styles.sectionTitle}>My Games</Text>
       {gamesLoading ? (
-        <ActivityIndicator color={Colors.accent} style={{ marginTop: Spacing.lg }} />
+        <ActivityIndicator color={Colors.accent} style={{ marginTop: Spacing.xxl }} />
       ) : myGames.length === 0 ? (
-        <Text style={styles.emptyText}>No games yet — create or join one!</Text>
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>No games yet</Text>
+          <Text style={styles.emptyHint}>Create or join a game to see it here</Text>
+        </View>
       ) : (
         myGames.map((game) => <GameCard key={game.id} game={game} />)
       )}
 
       {/* Sign Out */}
-      <Button
-        title="Sign Out"
-        onPress={handleSignOut}
-        variant="ghost"
-        style={styles.signOutBtn}
-        textStyle={{ color: Colors.error }}
-      />
+      <Pressable onPress={handleSignOut} style={styles.signOutBtn}>
+        <Text style={styles.signOutText}>Sign Out</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -153,7 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark,
   },
   content: {
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   center: {
     flex: 1,
@@ -162,18 +167,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark,
   },
   profileCard: {
-    backgroundColor: Colors.darkElevated,
     alignItems: "center",
-    padding: Spacing.xxl,
-    marginBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.darkTertiary,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xxl,
+    marginBottom: Spacing.xxl,
+    position: "relative",
+    overflow: "hidden",
+  },
+  profileGlow: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   name: {
     fontSize: FontSize.xxl,
     fontWeight: "800",
     color: Colors.text,
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
+    letterSpacing: -0.5,
   },
   email: {
     fontSize: FontSize.sm,
@@ -185,13 +199,15 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     gap: Spacing.sm,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.xl,
   },
   tag: {
-    backgroundColor: Colors.darkTertiary,
+    backgroundColor: Colors.darkCard,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs + 2,
     borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   tagText: {
     fontSize: FontSize.xs,
@@ -203,16 +219,32 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.text,
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
+    letterSpacing: -0.3,
+  },
+  emptyBox: {
+    alignItems: "center",
+    paddingVertical: Spacing.xxxl,
   },
   emptyText: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    fontWeight: "600",
+  },
+  emptyHint: {
     fontSize: FontSize.sm,
     color: Colors.textMuted,
-    textAlign: "center",
-    paddingVertical: Spacing.xxl,
+    marginTop: Spacing.xs,
   },
   signOutBtn: {
-    marginTop: Spacing.xxxl,
+    marginTop: Spacing.xxxxl,
     alignSelf: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xxl,
+  },
+  signOutText: {
+    color: Colors.error,
+    fontSize: FontSize.sm,
+    fontWeight: "600",
   },
 });

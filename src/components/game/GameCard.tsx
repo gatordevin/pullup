@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
-import { Colors, BorderRadius, FontSize, Spacing } from "@/lib/constants";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors, Gradient, BorderRadius, FontSize, Spacing } from "@/lib/constants";
 import { formatGameTime } from "@/lib/datetime";
 import { SportIcon } from "./SportIcon";
 import type { GameWithLocation } from "@/types/database";
@@ -13,13 +14,22 @@ interface GameCardProps {
 export function GameCard({ game }: GameCardProps) {
   const spotsLeft = game.max_players - game.current_players;
   const isFull = spotsLeft <= 0;
+  const fillPct = Math.min((game.current_players / game.max_players) * 100, 100);
 
   return (
-    <TouchableOpacity
-      style={styles.card}
+    <Pressable
       onPress={() => router.push(`/game/${game.id}`)}
-      activeOpacity={0.7}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && styles.cardPressed,
+      ]}
     >
+      {/* Subtle gradient shine on top edge */}
+      <LinearGradient
+        colors={[...Gradient.cardShine]}
+        style={styles.shine}
+      />
+
       <View style={styles.header}>
         <SportIcon sport={game.sport} />
         <View style={styles.headerText}>
@@ -30,53 +40,67 @@ export function GameCard({ game }: GameCardProps) {
         </View>
         <View style={[styles.badge, isFull && styles.badgeFull]}>
           <Text style={[styles.badgeText, isFull && styles.badgeFullText]}>
-            {isFull ? "FULL" : `${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""}`}
+            {isFull ? "FULL" : `${spotsLeft} left`}
           </Text>
         </View>
       </View>
 
       <View style={styles.details}>
-        <Text style={styles.location}>📍 {game.locations?.name ?? "TBD"}</Text>
-        <Text style={styles.time}>🕐 {formatGameTime(game.starts_at)}</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>📍</Text>
+          <Text style={styles.detailValue}>{game.locations?.name ?? "TBD"}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>🕐</Text>
+          <Text style={styles.detailValue}>{formatGameTime(game.starts_at)}</Text>
+        </View>
       </View>
 
-      <View style={styles.footer}>
-        <View style={styles.players}>
-          <Text style={styles.playerCount}>
-            {game.current_players}/{game.max_players} players
-          </Text>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${(game.current_players / game.max_players) * 100}%`,
-                },
-                isFull && styles.progressFull,
-              ]}
-            />
-          </View>
+      {/* Progress bar */}
+      <View style={styles.progressWrap}>
+        <View style={styles.progressBar}>
+          <LinearGradient
+            colors={isFull ? [Colors.error, Colors.error] : [...Gradient.brand]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.progressFill, { width: `${fillPct}%` }]}
+          />
         </View>
+        <Text style={styles.playerCount}>
+          {game.current_players}/{game.max_players}
+        </Text>
       </View>
 
       {game.notes ? (
         <Text style={styles.notes} numberOfLines={1}>
-          {game.notes}
+          "{game.notes}"
         </Text>
       ) : null}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.darkElevated,
+    backgroundColor: Colors.darkCard,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    padding: Spacing.lg + 2,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.darkTertiary,
+    borderColor: Colors.border,
+    overflow: "hidden",
+  },
+  cardPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+  shine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   header: {
     flexDirection: "row",
@@ -91,20 +115,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: "700",
     color: Colors.text,
+    letterSpacing: -0.3,
   },
   skill: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     textTransform: "capitalize",
+    marginTop: 1,
   },
   badge: {
-    backgroundColor: Colors.accent + "20",
+    backgroundColor: Colors.accent + "18",
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.xs + 1,
     borderRadius: BorderRadius.full,
   },
   badgeFull: {
-    backgroundColor: Colors.error + "20",
+    backgroundColor: Colors.error + "18",
   },
   badgeText: {
     fontSize: FontSize.xs,
@@ -116,29 +142,28 @@ const styles = StyleSheet.create({
   },
   details: {
     marginBottom: Spacing.md,
+    gap: Spacing.xs + 2,
   },
-  location: {
-    fontSize: FontSize.sm,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  time: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-  },
-  footer: {
+  detailRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: Spacing.sm,
   },
-  players: {
-    flex: 1,
+  detailLabel: {
+    fontSize: 13,
+    width: 20,
   },
-  playerCount: {
-    fontSize: FontSize.xs,
+  detailValue: {
+    fontSize: FontSize.sm,
     color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
+  },
+  progressWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
   },
   progressBar: {
+    flex: 1,
     height: 4,
     backgroundColor: Colors.darkTertiary,
     borderRadius: 2,
@@ -146,16 +171,20 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: Colors.accent,
     borderRadius: 2,
   },
-  progressFull: {
-    backgroundColor: Colors.error,
+  playerCount: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+    minWidth: 30,
+    textAlign: "right",
   },
   notes: {
     fontSize: FontSize.xs,
     color: Colors.textMuted,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.sm + 2,
     fontStyle: "italic",
   },
 });

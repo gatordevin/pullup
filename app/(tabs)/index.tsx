@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   View,
   FlatList,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
@@ -29,8 +30,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <FeedTabs active={tab} onChange={setTab} />
-      <SportFilterChips selected={sportFilter} onSelect={setSportFilter} />
+      <View style={styles.headerArea}>
+        <FeedTabs active={tab} onChange={setTab} />
+        <SportFilterChips selected={sportFilter} onSelect={setSportFilter} />
+      </View>
 
       {loading ? (
         <View style={styles.center}>
@@ -51,13 +54,14 @@ export default function HomeScreen() {
           contentContainerStyle={games.length === 0 ? styles.center : styles.list}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>🏓</Text>
+              <Text style={styles.emptyIcon}>🏓</Text>
               <Text style={styles.emptyTitle}>No games yet</Text>
               <Text style={styles.emptyText}>
-                Be the first to post a game!
+                Tap + to post the first game
               </Text>
             </View>
           }
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -71,8 +75,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark,
   },
+  headerArea: {
+    paddingTop: Spacing.md,
+  },
   list: {
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
     paddingBottom: 100,
   },
   center: {
@@ -82,17 +89,18 @@ const styles = StyleSheet.create({
   },
   empty: {
     alignItems: "center",
-    paddingTop: 60,
+    paddingTop: 80,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
+  emptyIcon: {
+    fontSize: 56,
+    marginBottom: Spacing.lg,
   },
   emptyTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: "700",
+    fontSize: FontSize.xl,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.5,
   },
   emptyText: {
     fontSize: FontSize.sm,

@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   ActivityIndicator,
@@ -51,14 +51,16 @@ export function Button({
     </Text>
   );
 
-  // Gradient fill for primary variant
   if (variant === "primary") {
     return (
-      <TouchableOpacity
+      <Pressable
         onPress={onPress}
         disabled={isDisabled}
-        activeOpacity={0.8}
-        style={[isDisabled && styles.disabled, style]}
+        style={({ pressed }) => [
+          isDisabled && styles.disabled,
+          pressed && styles.pressed,
+          style,
+        ]}
       >
         <LinearGradient
           colors={[...Gradient.brand]}
@@ -68,25 +70,25 @@ export function Button({
         >
           {inner}
         </LinearGradient>
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={isDisabled}
-      style={[
+      style={({ pressed }) => [
         styles.base,
         styles[variant],
         styles[`size_${size}`],
         isDisabled && styles.disabled,
+        pressed && styles.pressed,
         style,
       ]}
-      activeOpacity={0.7}
     >
       {inner}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -98,34 +100,41 @@ const styles = StyleSheet.create({
   },
   primary: {},
   secondary: {
-    backgroundColor: Colors.darkElevated,
+    backgroundColor: Colors.darkCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   outline: {
     backgroundColor: "transparent",
     borderWidth: 1.5,
-    borderColor: Colors.accent,
+    borderColor: Colors.accent + "60",
   },
   ghost: {
     backgroundColor: "transparent",
   },
   size_sm: {
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 1,
     paddingHorizontal: Spacing.lg,
   },
   size_md: {
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.md + 1,
     paddingHorizontal: Spacing.xl,
   },
   size_lg: {
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.lg + 1,
     paddingHorizontal: Spacing.xxl,
     minHeight: 52,
   },
   disabled: {
-    opacity: 0.4,
+    opacity: 0.35,
+  },
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   text: {
     fontWeight: "700",
+    letterSpacing: -0.2,
   },
   text_primary: {
     color: Colors.dark,
@@ -146,6 +155,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
   },
   textSize_lg: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
+    fontWeight: "700",
   },
 });

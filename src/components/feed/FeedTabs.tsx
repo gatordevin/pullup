@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, Pressable, Text, StyleSheet } from "react-native";
 import { Colors, FontSize, Spacing, BorderRadius } from "@/lib/constants";
 
 interface FeedTabsProps {
@@ -10,22 +10,18 @@ interface FeedTabsProps {
 export function FeedTabs({ active, onChange }: FeedTabsProps) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.tab, active === "upcoming" && styles.activeTab]}
-        onPress={() => onChange("upcoming")}
-      >
-        <Text style={[styles.text, active === "upcoming" && styles.activeText]}>
-          Upcoming
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.tab, active === "my" && styles.activeTab]}
-        onPress={() => onChange("my")}
-      >
-        <Text style={[styles.text, active === "my" && styles.activeText]}>
-          My Games
-        </Text>
-      </TouchableOpacity>
+      {(["upcoming", "my"] as const).map((tab) => (
+        <Pressable
+          key={tab}
+          style={[styles.tab, active === tab && styles.activeTab]}
+          onPress={() => onChange(tab)}
+        >
+          <Text style={[styles.text, active === tab && styles.activeText]}>
+            {tab === "upcoming" ? "Upcoming" : "My Games"}
+          </Text>
+          {active === tab && <View style={styles.indicator} />}
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -34,26 +30,31 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    backgroundColor: Colors.darkElevated,
-    borderRadius: BorderRadius.md,
-    padding: 3,
+    marginBottom: Spacing.lg,
+    gap: Spacing.xxl,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   tab: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: BorderRadius.sm,
+    paddingBottom: Spacing.md,
+    position: "relative",
   },
-  activeTab: {
-    backgroundColor: Colors.accent + "18",
-  },
+  activeTab: {},
   text: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.md,
     fontWeight: "600",
     color: Colors.textMuted,
   },
   activeText: {
-    color: Colors.accent,
+    color: Colors.text,
+  },
+  indicator: {
+    position: "absolute",
+    bottom: -1,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: Colors.accent,
+    borderRadius: 1,
   },
 });
