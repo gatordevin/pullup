@@ -111,6 +111,14 @@ export const UF_LOCATIONS = [
   { id: "ring-road", name: "Ring Road Fields", lat: 29.6501, lng: -82.3408 },
 ] as const;
 
+export const PACE_OPTIONS = [
+  { value: "casual", label: "Casual", emoji: "🚶" },
+  { value: "moderate", label: "Moderate", emoji: "🏃" },
+  { value: "fast", label: "Fast", emoji: "⚡" },
+] as const;
+
+export const DISTANCE_OPTIONS = [1, 2, 3, 5, 8, 10] as const;
+
 export const UF_CAMPUS_CENTER = {
   latitude: 29.6436,
   longitude: -82.3549,

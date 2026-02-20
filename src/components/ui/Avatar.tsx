@@ -1,14 +1,29 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors, Gradient } from "@/lib/constants";
 
 interface AvatarProps {
   name: string | null;
+  imageUrl?: string | null;
   size?: number;
 }
 
-export function Avatar({ name, size = 40 }: AvatarProps) {
+export function Avatar({ name, imageUrl, size = 40 }: AvatarProps) {
+  if (imageUrl) {
+    return (
+      <Image
+        source={{ uri: imageUrl }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: Colors.darkCard,
+        }}
+      />
+    );
+  }
+
   const initials = name
     ? name
         .split(" ")

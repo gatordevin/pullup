@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   Alert,
@@ -29,10 +30,12 @@ import {
 import type { GameWithLocation } from "@/types/database";
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const { profile, loading, fetchProfile } = useProfile(user?.id);
   const [myGames, setMyGames] = useState<GameWithLocation[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     fetchProfile();
@@ -123,10 +126,39 @@ export default function ProfileScreen() {
             colors={[...Gradient.brandSubtle]}
             style={styles.profileGlow}
           />
-          <Avatar name={profile?.display_name ?? null} size={80} />
-          <Text style={styles.name}>
-            {profile?.display_name ?? "Player"}
-          </Text>
+          <Avatar name={profile?.display_name ?? null} imageUrl={profile?.avatar_url} size={80} />
+          {editingName ? (
+            <View style={styles.editNameRow}>
+              <TextInput
+                style={styles.editNameInput}
+                value={newName}
+                onChangeText={setNewName}
+                placeholder="Your name"
+                placeholderTextColor={Colors.textMuted}
+                autoFocus
+                maxLength={30}
+              />
+              <Pressable
+                onPress={async () => {
+                  if (newName.trim().length >= 2 && user) {
+                    await supabase.from("profiles").update({ display_name: newName.trim() }).eq("id", user.id);
+                    await refreshProfile();
+                    fetchProfile();
+                  }
+                  setEditingName(false);
+                }}
+                style={styles.editNameSave}
+              >
+                <Text style={styles.editNameSaveText}>Save</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable onPress={() => { setNewName(profile?.display_name ?? ""); setEditingName(true); }}>
+              <Text style={styles.name}>
+                {profile?.display_name ?? "Player"} ✏️
+              </Text>
+            </Pressable>
+          )}
           <Text style={styles.email}>{user?.email}</Text>
 
           <View style={styles.tags}>
@@ -267,6 +299,36 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
 
+  editNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+  editNameInput: {
+    backgroundColor: Colors.darkCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: FontSize.lg,
+    color: Colors.text,
+    fontWeight: "700",
+    minWidth: 180,
+    textAlign: "center",
+  },
+  editNameSave: {
+    backgroundColor: Colors.accent,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  editNameSaveText: {
+    color: Colors.dark,
+    fontWeight: "700",
+    fontSize: FontSize.sm,
+  },
   signOutBtn: {
     marginTop: Spacing.xxxxl,
     alignSelf: "center",

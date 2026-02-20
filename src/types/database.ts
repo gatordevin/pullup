@@ -41,6 +41,7 @@ export interface Database {
           skill_level: "beginner" | "intermediate" | "advanced" | "any" | null;
           favorite_location_id: string | null;
           expo_push_token: string | null;
+          avatar_url: string | null;
           onboarded: boolean;
           created_at: string;
           updated_at: string;
@@ -52,6 +53,7 @@ export interface Database {
           skill_level?: "beginner" | "intermediate" | "advanced" | "any" | null;
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
+          avatar_url?: string | null;
           onboarded?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -63,6 +65,7 @@ export interface Database {
           skill_level?: "beginner" | "intermediate" | "advanced" | "any" | null;
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
+          avatar_url?: string | null;
           onboarded?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -91,6 +94,8 @@ export interface Database {
           has_equipment: boolean;
           extra_equipment: boolean;
           time_flexible: boolean;
+          distance_miles: number | null;
+          pace: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -108,6 +113,8 @@ export interface Database {
           has_equipment?: boolean;
           extra_equipment?: boolean;
           time_flexible?: boolean;
+          distance_miles?: number | null;
+          pace?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -125,6 +132,8 @@ export interface Database {
           has_equipment?: boolean;
           extra_equipment?: boolean;
           time_flexible?: boolean;
+          distance_miles?: number | null;
+          pace?: string | null;
           created_at?: string;
           updated_at?: string;
         };

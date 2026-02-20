@@ -135,6 +135,15 @@ export default function GameDetailScreen() {
 
             {/* Detail card */}
             <View style={styles.detailCard}>
+              {game.sport === "running" && (game.distance_miles || game.pace) && (
+                <DetailRow
+                  label="Run"
+                  value={[
+                    game.distance_miles ? `${game.distance_miles} mi` : null,
+                    game.pace ? `${game.pace} pace` : null,
+                  ].filter(Boolean).join(" · ")}
+                />
+              )}
               <DetailRow label="Where" value={game.locations?.name ?? "Any court"} />
               <DetailRow
                 label="When"

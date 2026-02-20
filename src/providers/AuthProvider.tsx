@@ -39,18 +39,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (existing) {
-      // Auto-onboard existing non-onboarded profiles
-      if (!(existing as Profile).onboarded) {
-        const name = (existing as Profile).display_name ??
+      const p = existing as Profile;
+      const updates: Record<string, any> = {};
+
+      // Auto-onboard if needed
+      if (!p.onboarded) {
+        updates.onboarded = true;
+        updates.display_name = p.display_name ??
           clerkUser?.firstName ??
           clerkUser?.primaryEmailAddress?.emailAddress?.split("@")[0] ??
           "Player";
-        await supabase.from("profiles").update({ onboarded: true, display_name: name }).eq("id", userId);
-        setProfile({ ...(existing as Profile), onboarded: true, display_name: name });
-        setProfileLoading(false);
-        return;
       }
-      setProfile(existing as Profile);
+      // Sync avatar from Clerk
+      if (clerkUser?.imageUrl && p.avatar_url !== clerkUser.imageUrl) {
+        updates.avatar_url = clerkUser.imageUrl;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await supabase.from("profiles").update(updates).eq("id", userId);
+        setProfile({ ...p, ...updates });
+      } else {
+        setProfile(p);
+      }
+      setProfileLoading(false);
+      return;
     } else {
       // Create profile for new Clerk user
       const displayName =
@@ -63,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .insert({
           id: userId,
           display_name: displayName,
+          avatar_url: clerkUser?.imageUrl ?? null,
           onboarded: true,
         })
         .select("*")

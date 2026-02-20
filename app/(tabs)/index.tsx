@@ -11,10 +11,12 @@ import { router } from "expo-router";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGames } from "@/hooks/useGames";
 import { GameCard } from "@/components/game/GameCard";
+import { ChatPreview } from "@/components/game/ChatPreview";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { SportFilterChips } from "@/components/feed/SportFilterChips";
 import { FAB } from "@/components/ui/FAB";
 import { Colors, FontSize, Spacing, Sport } from "@/lib/constants";
+import type { GameWithLocation } from "@/types/database";
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -26,6 +28,13 @@ export default function HomeScreen() {
     myOnly: tab === "my",
     userId: user?.id,
   });
+
+  const renderItem = ({ item }: { item: GameWithLocation }) => (
+    <View>
+      <GameCard game={item} />
+      <ChatPreview gameId={item.id} />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -44,7 +53,7 @@ export default function HomeScreen() {
         <FlatList
           data={games}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <GameCard game={item} />}
+          renderItem={renderItem}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -58,7 +67,7 @@ export default function HomeScreen() {
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>🏓</Text>
+              <Text style={styles.emptyIcon}>🎯</Text>
               <Text style={styles.emptyTitle}>No games yet</Text>
               <Text style={styles.emptyText}>
                 Tap + to post the first game

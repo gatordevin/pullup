@@ -39,7 +39,18 @@ export function GameCard({ game }: GameCardProps) {
         <Text style={styles.relTime}>{formatRelative(game.starts_at)}</Text>
       </View>
 
-      {/* Details */}
+      {/* Sport-specific details */}
+      {game.sport === "running" ? (
+        <View style={styles.detailRow}>
+          <Text style={styles.detailIcon}>📏</Text>
+          <Text style={styles.detailText}>
+            {game.distance_miles ? `${game.distance_miles} mi` : "Distance TBD"}
+            {game.pace ? ` · ${game.pace} pace` : ""}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Location + time */}
       <View style={styles.detailRow}>
         <Text style={styles.detailIcon}>📍</Text>
         <Text style={styles.detailText}>
@@ -48,12 +59,9 @@ export function GameCard({ game }: GameCardProps) {
       </View>
       <View style={styles.detailRow}>
         <Text style={styles.detailIcon}>🕐</Text>
-        <Text style={styles.detailText}>{formatGameTime(game.starts_at)}</Text>
-        {game.time_flexible && (
-          <View style={styles.flexBadge}>
-            <Text style={styles.flexText}>Flexible</Text>
-          </View>
-        )}
+        <Text style={styles.detailText}>
+          {game.time_flexible ? "Flexible" : formatGameTime(game.starts_at)}
+        </Text>
       </View>
 
       {/* Tags */}
@@ -63,7 +71,7 @@ export function GameCard({ game }: GameCardProps) {
             <Text style={styles.tagText}>{game.skill_level}</Text>
           </View>
         )}
-        {game.has_equipment && (
+        {game.sport !== "running" && game.has_equipment && (
           <View style={styles.tag}>
             <Text style={styles.tagText}>
               {si.emoji} Has {getEquipLabel(game.sport)}
@@ -120,7 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -145,14 +153,6 @@ const styles = StyleSheet.create({
   },
   detailIcon: { fontSize: 14, width: 20 },
   detailText: { fontSize: FontSize.sm, color: Colors.textSecondary, flex: 1 },
-
-  flexBadge: {
-    backgroundColor: Colors.accent + "15",
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.full,
-  },
-  flexText: { fontSize: 11, color: Colors.accent, fontWeight: "600" },
 
   tagsRow: {
     flexDirection: "row",
