@@ -26,6 +26,7 @@ import {
   BorderRadius,
   SPORTS,
   SKILL_LEVELS,
+  getSkillLevels,
   UF_LOCATIONS,
   Sport,
   SkillLevel,
@@ -179,7 +180,7 @@ export default function CreateGameScreen() {
             const sel = sport === s.value;
             return (
               <Pressable key={s.value}
-                onPress={() => { setSport(s.value); setHasEquipment(false); setExtraEquipment(false); setShowMore(false); }}
+                onPress={() => { setSport(s.value); setMaxPlayers(s.maxPlayersDefault); setHasEquipment(false); setExtraEquipment(false); setShowMore(false); setSkillLevel("any"); }}
                 style={({ pressed }) => [styles.sportCard, sel && styles.sportCardSel, pressed && { opacity: 0.8 }]}>
                 {sel && <LinearGradient colors={[...Gradient.brandSubtle]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />}
                 <Text style={styles.sportEmoji}>{s.emoji}</Text>
@@ -234,7 +235,7 @@ export default function CreateGameScreen() {
 
             <Text style={styles.sectionLabel}>Skill level</Text>
             <View style={styles.chipRow}>
-              {SKILL_LEVELS.map((s) => {
+              {getSkillLevels(sport).map((s) => {
                 const sel = skillLevel === s.value;
                 return (
                   <Pressable key={s.value} onPress={() => setSkillLevel(s.value)}

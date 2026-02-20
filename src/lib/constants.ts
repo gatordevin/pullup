@@ -70,15 +70,51 @@ export const BorderRadius = {
   full: 9999,
 } as const;
 
-export type Sport = "pickleball" | "spikeball" | "running" | "volleyball";
-export type SkillLevel = "beginner" | "intermediate" | "advanced" | "any";
+export type Sport =
+  | "pickleball"
+  | "spikeball"
+  | "running"
+  | "volleyball"
+  | "climbing"
+  | "soccer"
+  | "football"
+  | "basketball"
+  | "frisbee"
+  | "tennis"
+  | "badminton";
+
+export type SkillLevel =
+  | "any"
+  | "beginner"
+  | "intermediate"
+  | "advanced"
+  | "expert"
+  // Climbing V-grades
+  | "v0-v3"
+  | "v4-v6"
+  | "v7-v10"
+  | "v11plus"
+  // Tennis NTRP
+  | "ntrp-2.5"
+  | "ntrp-3.0"
+  | "ntrp-3.5"
+  | "ntrp-4.0"
+  | "ntrp-4.5plus";
+
 export type GameStatus = "open" | "full" | "started" | "cancelled" | "completed";
 
-export const SPORTS: { value: Sport; label: string; emoji: string }[] = [
-  { value: "pickleball", label: "Pickleball", emoji: "🏓" },
-  { value: "spikeball", label: "Spikeball", emoji: "🔵" },
-  { value: "volleyball", label: "Volleyball", emoji: "🏐" },
-  { value: "running", label: "Running", emoji: "🏃" },
+export const SPORTS: { value: Sport; label: string; emoji: string; teamBased: boolean; maxPlayersDefault: number }[] = [
+  { value: "pickleball", label: "Pickleball", emoji: "🏓", teamBased: true, maxPlayersDefault: 4 },
+  { value: "spikeball", label: "Spikeball", emoji: "🔵", teamBased: true, maxPlayersDefault: 4 },
+  { value: "volleyball", label: "Volleyball", emoji: "🏐", teamBased: true, maxPlayersDefault: 12 },
+  { value: "basketball", label: "Basketball", emoji: "🏀", teamBased: true, maxPlayersDefault: 10 },
+  { value: "soccer", label: "Soccer", emoji: "⚽", teamBased: true, maxPlayersDefault: 14 },
+  { value: "football", label: "Flag Football", emoji: "🏈", teamBased: true, maxPlayersDefault: 14 },
+  { value: "frisbee", label: "Ultimate Frisbee", emoji: "🥏", teamBased: true, maxPlayersDefault: 14 },
+  { value: "tennis", label: "Tennis", emoji: "🎾", teamBased: true, maxPlayersDefault: 4 },
+  { value: "badminton", label: "Badminton", emoji: "🏸", teamBased: true, maxPlayersDefault: 4 },
+  { value: "climbing", label: "Climbing", emoji: "🧗", teamBased: false, maxPlayersDefault: 8 },
+  { value: "running", label: "Running", emoji: "🏃", teamBased: false, maxPlayersDefault: 20 },
 ];
 
 export function sportInfo(sport: string) {
@@ -88,18 +124,73 @@ export function sportInfo(sport: string) {
 export function equipmentLabel(sport: string) {
   switch (sport) {
     case "pickleball": return "paddles";
-    case "spikeball": return "a net";
+    case "spikeball": return "a Spikeball set";
     case "volleyball": return "a ball";
+    case "basketball": return "a ball";
+    case "soccer": return "a ball + cleats";
+    case "football": return "a football + flags";
+    case "frisbee": return "a disc";
+    case "tennis": return "rackets + balls";
+    case "badminton": return "rackets + shuttlecock";
+    case "climbing": return "shoes + chalk";
+    case "running": return "running shoes";
     default: return "equipment";
   }
 }
 
-export const SKILL_LEVELS: { value: SkillLevel; label: string }[] = [
-  { value: "any", label: "Any Level" },
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
+export function sportDescription(sport: string): string {
+  switch (sport) {
+    case "pickleball": return "2v2 or 1v1 paddle sport";
+    case "spikeball": return "2v2 roundnet game";
+    case "volleyball": return "6v6 net sport";
+    case "basketball": return "5v5 half or full court";
+    case "soccer": return "7v7 or 11v11 on grass";
+    case "football": return "Flag football, 7v7";
+    case "frisbee": return "7v7 ultimate frisbee";
+    case "tennis": return "Singles or doubles";
+    case "badminton": return "Singles or doubles";
+    case "climbing": return "Bouldering or top rope session";
+    case "running": return "Group run";
+    default: return sport;
+  }
+}
+
+// Generic skill levels (used by most sports)
+export const GENERIC_SKILL_LEVELS: { value: SkillLevel; label: string; description?: string }[] = [
+  { value: "any", label: "Any Level", description: "All skill levels welcome" },
+  { value: "beginner", label: "Beginner", description: "New to the sport" },
+  { value: "intermediate", label: "Intermediate", description: "Knows the rules, plays regularly" },
+  { value: "advanced", label: "Advanced", description: "Competitive experience" },
+  { value: "expert", label: "Expert", description: "Elite / tournament level" },
 ];
+
+export const CLIMBING_SKILL_LEVELS: { value: SkillLevel; label: string; description?: string }[] = [
+  { value: "any", label: "Any Level", description: "All climbers welcome" },
+  { value: "v0-v3", label: "V0–V3", description: "Learning movement basics" },
+  { value: "v4-v6", label: "V4–V6", description: "Solid technique, working harder problems" },
+  { value: "v7-v10", label: "V7–V10", description: "Strong climber, projecting hard routes" },
+  { value: "v11plus", label: "V11+", description: "Elite level" },
+];
+
+export const TENNIS_SKILL_LEVELS: { value: SkillLevel; label: string; description?: string }[] = [
+  { value: "any", label: "Any Level" },
+  { value: "ntrp-2.5", label: "NTRP 2.5", description: "Beginner, learning strokes" },
+  { value: "ntrp-3.0", label: "NTRP 3.0", description: "Consistent on medium-paced shots" },
+  { value: "ntrp-3.5", label: "NTRP 3.5", description: "Reliable strokes, starting strategy" },
+  { value: "ntrp-4.0", label: "NTRP 4.0", description: "Consistent and dependable in strokes" },
+  { value: "ntrp-4.5plus", label: "NTRP 4.5+", description: "Strong competitive player" },
+];
+
+export function getSkillLevels(sport?: string) {
+  switch (sport) {
+    case "climbing": return CLIMBING_SKILL_LEVELS;
+    case "tennis": return TENNIS_SKILL_LEVELS;
+    default: return GENERIC_SKILL_LEVELS;
+  }
+}
+
+// Keep SKILL_LEVELS as alias for backward compatibility
+export const SKILL_LEVELS = GENERIC_SKILL_LEVELS;
 
 export const UF_LOCATIONS = [
   { id: "flavet", name: "Flavet Field", lat: 29.6499, lng: -82.3486 },

@@ -37,8 +37,8 @@ export interface Database {
         Row: {
           id: string;
           display_name: string | null;
-          preferred_sport: "pickleball" | "spikeball" | "running" | "volleyball" | null;
-          skill_level: "beginner" | "intermediate" | "advanced" | "any" | null;
+          preferred_sport: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton" | null;
+          skill_level: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus" | null;
           favorite_location_id: string | null;
           expo_push_token: string | null;
           avatar_url: string | null;
@@ -51,8 +51,8 @@ export interface Database {
         Insert: {
           id: string;
           display_name?: string | null;
-          preferred_sport?: "pickleball" | "spikeball" | "running" | "volleyball" | null;
-          skill_level?: "beginner" | "intermediate" | "advanced" | "any" | null;
+          preferred_sport?: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton" | null;
+          skill_level?: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus" | null;
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
           avatar_url?: string | null;
@@ -65,8 +65,8 @@ export interface Database {
         Update: {
           id?: string;
           display_name?: string | null;
-          preferred_sport?: "pickleball" | "spikeball" | "running" | "volleyball" | null;
-          skill_level?: "beginner" | "intermediate" | "advanced" | "any" | null;
+          preferred_sport?: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton" | null;
+          skill_level?: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus" | null;
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
           avatar_url?: string | null;
@@ -89,8 +89,8 @@ export interface Database {
         Row: {
           id: string;
           host_id: string;
-          sport: "pickleball" | "spikeball" | "running" | "volleyball";
-          skill_level: "beginner" | "intermediate" | "advanced" | "any";
+          sport: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton";
+          skill_level: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus";
           location_id: string | null;
           starts_at: string;
           max_players: number;
@@ -110,8 +110,8 @@ export interface Database {
         Insert: {
           id?: string;
           host_id: string;
-          sport: "pickleball" | "spikeball" | "running" | "volleyball";
-          skill_level?: "beginner" | "intermediate" | "advanced" | "any";
+          sport: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton";
+          skill_level?: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus";
           location_id?: string | null;
           starts_at: string;
           max_players: number;
@@ -131,8 +131,8 @@ export interface Database {
         Update: {
           id?: string;
           host_id?: string;
-          sport?: "pickleball" | "spikeball" | "running" | "volleyball";
-          skill_level?: "beginner" | "intermediate" | "advanced" | "any";
+          sport?: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton";
+          skill_level?: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus";
           location_id?: string | null;
           starts_at?: string;
           max_players?: number;
@@ -282,8 +282,8 @@ export interface Database {
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
-      sport_type: "pickleball" | "spikeball" | "running" | "volleyball";
-      skill_level_type: "beginner" | "intermediate" | "advanced" | "any";
+      sport_type: "pickleball" | "spikeball" | "running" | "volleyball" | "climbing" | "soccer" | "football" | "basketball" | "frisbee" | "tennis" | "badminton";
+      skill_level_type: "beginner" | "intermediate" | "advanced" | "any" | "expert" | "v0-v3" | "v4-v6" | "v7-v10" | "v11plus" | "ntrp-2.5" | "ntrp-3.0" | "ntrp-3.5" | "ntrp-4.0" | "ntrp-4.5plus";
       game_status_type: "open" | "full" | "started" | "cancelled" | "completed";
       participant_status_type: "joined" | "left";
       friendship_status: "pending" | "accepted" | "declined";
