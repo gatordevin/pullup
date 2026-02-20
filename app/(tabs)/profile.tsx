@@ -33,8 +33,10 @@ import {
   UF_LOCATIONS,
   APP_URL,
   getInviteUrl,
+  getReferralUrl,
   sportInfo,
 } from "@/lib/constants";
+import { useReferral } from "@/hooks/useReferral";
 import type { GameWithLocation } from "@/types/database";
 
 export default function ProfileScreen() {
@@ -62,6 +64,7 @@ export default function ProfileScreen() {
     removeFriend,
   } = useFriends(user?.id);
   const { statsBySport, totals, fetchStats: fetchPlayerStats } = usePlayerStats(user?.id);
+  const { referralCode, stats: referralStats, fetchReferralCode, fetchStats: fetchReferralStats } = useReferral(user?.id);
 
   useEffect(() => {
     if (user) {
@@ -69,7 +72,11 @@ export default function ProfileScreen() {
       fetchMyGames();
       fetchStats();
       fetchPlayerStats();
-      if (!isGuest) fetchFriends();
+      if (!isGuest) {
+        fetchFriends();
+        fetchReferralCode();
+        fetchReferralStats();
+      }
     } else {
       setGamesLoading(false);
     }
@@ -340,6 +347,63 @@ export default function ProfileScreen() {
           <View style={[styles.matchStatsCard, { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg }]}>
             <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
             <Text style={styles.matchStatsEmpty}>No matches recorded yet. Join a game and record your first match!</Text>
+          </View>
+        )}
+
+        {/* Referral / Raffle Card */}
+        {!isGuest && user && referralCode && (
+          <View style={styles.referralCard}>
+            <View style={styles.referralHeader}>
+              <Text style={styles.referralTitle}>🎟️ Raffle & Referrals</Text>
+              <View style={styles.ticketBadge}>
+                <Text style={styles.ticketCount}>{referralStats?.tickets ?? 0}</Text>
+                <Text style={styles.ticketLabel}>tickets</Text>
+              </View>
+            </View>
+
+            <Text style={styles.referralDesc}>
+              Invite friends with your code. When they sign up with Google and join a game, you earn a raffle ticket for a chance to win a pickleball paddle!
+            </Text>
+
+            <View style={styles.referralStats}>
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValue}>{referralStats?.total_referrals ?? 0}</Text>
+                <Text style={styles.referralStatLabel}>Invited</Text>
+              </View>
+              <View style={styles.referralStatItem}>
+                <Text style={[styles.referralStatValue, { color: Colors.success }]}>
+                  {referralStats?.tickets ?? 0}
+                </Text>
+                <Text style={styles.referralStatLabel}>Joined ✓</Text>
+              </View>
+              <View style={styles.referralStatItem}>
+                <Text style={[styles.referralStatValue, { color: Colors.textMuted }]}>
+                  {referralStats?.pending_referrals ?? 0}
+                </Text>
+                <Text style={styles.referralStatLabel}>Pending</Text>
+              </View>
+            </View>
+
+            <View style={styles.codeBox}>
+              <Text style={styles.codeLabel}>Your referral code</Text>
+              <Text style={styles.codeText}>{referralCode}</Text>
+            </View>
+
+            <Pressable
+              style={styles.shareReferralBtn}
+              onPress={async () => {
+                const url = getReferralUrl(referralCode);
+                try {
+                  await Clipboard.setStringAsync(url);
+                } catch {}
+                try {
+                  const { Share } = await import("react-native");
+                  await Share.share({ message: `Join me on PullUp! ${url}`, url });
+                } catch {}
+              }}
+            >
+              <Text style={styles.shareReferralBtnText}>📤 Share Referral Link</Text>
+            </Pressable>
           </View>
         )}
 
@@ -965,5 +1029,109 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     paddingVertical: Spacing.sm,
+  },
+  referralCard: {
+    backgroundColor: Colors.darkCard,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.accent + "33",
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+  },
+  referralHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
+  },
+  referralTitle: {
+    fontSize: FontSize.md,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  ticketBadge: {
+    backgroundColor: Colors.accent,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    alignItems: "center",
+    minWidth: 52,
+  },
+  ticketCount: {
+    fontSize: FontSize.lg,
+    fontWeight: "900",
+    color: Colors.dark,
+    lineHeight: 22,
+  },
+  ticketLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.dark,
+    textTransform: "uppercase",
+  },
+  referralDesc: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
+  },
+  referralStats: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: Spacing.lg,
+    backgroundColor: Colors.darkTertiary,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+  },
+  referralStatItem: {
+    alignItems: "center",
+  },
+  referralStatValue: {
+    fontSize: FontSize.xl,
+    fontWeight: "900",
+    color: Colors.text,
+  },
+  referralStatLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  codeBox: {
+    backgroundColor: Colors.darkInput,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  codeLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.xs,
+  },
+  codeText: {
+    fontSize: FontSize.xxl,
+    fontWeight: "900",
+    color: Colors.accent,
+    letterSpacing: 4,
+  },
+  shareReferralBtn: {
+    backgroundColor: Colors.accent + "22",
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.accent + "44",
+    paddingVertical: Spacing.md,
+    alignItems: "center",
+  },
+  shareReferralBtnText: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+    color: Colors.accent,
   },
 });
