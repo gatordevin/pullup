@@ -12,6 +12,7 @@ import {
   Pressable,
   Switch,
   TextInput,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -65,10 +66,16 @@ function crossConfirm(title: string, msg: string, onYes: () => void) {
 
 export default function GameDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, isGuest, guestLogin } = useAuth();
   const { game, participants, loading, refresh } = useGame(id!);
   const { messages, sendMessage } = useGameChat(id!);
   const chatListRef = useRef<FlatList>(null);
+
+  // Guest prompt state
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestLoading, setGuestLoading] = useState(false);
 
   // Edit mode state
   const [editing, setEditing] = useState(false);
@@ -106,6 +113,32 @@ export default function GameDetailScreen() {
 
   const si = sportInfo(game.sport);
   const canChat = hasJoined || isHost;
+
+  const handleJoinPress = () => {
+    if (!user) {
+      // Not logged in — show guest prompt
+      setShowGuestPrompt(true);
+      return;
+    }
+    // Already handled by JoinButton
+  };
+
+  const handleGuestSubmit = async () => {
+    if (guestName.trim().length < 2) {
+      crossAlert("Name required", "Please enter your name (at least 2 characters)");
+      return;
+    }
+    if (!guestEmail.trim() || !guestEmail.includes("@")) {
+      crossAlert("Email required", "Please enter a valid email");
+      return;
+    }
+    setGuestLoading(true);
+    await guestLogin(guestName.trim(), guestEmail.trim());
+    setGuestLoading(false);
+    setShowGuestPrompt(false);
+    // After guest login, the page will re-render with user set
+    // They can then tap Join again
+  };
 
   const startEdit = () => {
     setEditSkill((game.skill_level as SkillLevel) ?? "any");
@@ -495,14 +528,33 @@ export default function GameDetailScreen() {
 
           {/* Actions */}
           <View style={styles.actions}>
-            <JoinButton
-              gameId={game.id}
-              userId={user?.id ?? ""}
-              hasJoined={hasJoined}
-              isFull={isFull}
-              isHost={isHost}
-              onToggle={refresh}
-            />
+            {user ? (
+              <JoinButton
+                gameId={game.id}
+                userId={user.id}
+                hasJoined={hasJoined}
+                isFull={isFull}
+                isHost={isHost}
+                onToggle={refresh}
+              />
+            ) : (
+              <Pressable
+                onPress={handleJoinPress}
+                style={({ pressed }) => [
+                  styles.guestJoinBtn,
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <LinearGradient
+                  colors={[...Gradient.brand]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <Text style={styles.guestJoinText}>Pull Up</Text>
+                <Text style={styles.guestJoinSub}>Quick join — no account needed</Text>
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.secondaryRow}>
@@ -557,7 +609,7 @@ export default function GameDetailScreen() {
             </View>
           )}
 
-          {!canChat && (
+          {!canChat && user && (
             <View style={styles.chatLockedBox}>
               <Text style={styles.chatLockedText}>
                 Join to see the chat
@@ -566,6 +618,82 @@ export default function GameDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* ═══ GUEST PROMPT MODAL ═══ */}
+      <Modal
+        visible={showGuestPrompt}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowGuestPrompt(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowGuestPrompt(false)}
+        >
+          <Pressable
+            style={styles.modalCard}
+            onPress={() => {}}
+          >
+            <Text style={styles.modalTitle}>Join this game</Text>
+            <Text style={styles.modalSubtitle}>
+              Enter your name and email to pull up
+            </Text>
+
+            <Text style={styles.modalLabel}>Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={guestName}
+              onChangeText={setGuestName}
+              placeholder="Your name"
+              placeholderTextColor={Colors.textMuted}
+              autoFocus
+              maxLength={30}
+            />
+
+            <Text style={styles.modalLabel}>Email</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={guestEmail}
+              onChangeText={setGuestEmail}
+              placeholder="your@email.com"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              maxLength={100}
+            />
+
+            <Pressable
+              onPress={handleGuestSubmit}
+              style={({ pressed }) => [
+                styles.modalSubmitBtn,
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <LinearGradient
+                colors={[...Gradient.brand]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[StyleSheet.absoluteFill, { borderRadius: BorderRadius.md }]}
+              />
+              <Text style={styles.modalSubmitText}>
+                {guestLoading ? "Joining..." : "Let's Go"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setShowGuestPrompt(false);
+                router.push("/(auth)/login");
+              }}
+              style={styles.modalLoginLink}
+            >
+              <Text style={styles.modalLoginText}>
+                Have an account? Log in
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -803,6 +931,26 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
 
+  /* Guest join button */
+  guestJoinBtn: {
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+  },
+  guestJoinText: {
+    fontSize: FontSize.lg,
+    fontWeight: "800",
+    color: Colors.dark,
+    letterSpacing: -0.3,
+  },
+  guestJoinSub: {
+    fontSize: FontSize.xs,
+    color: Colors.dark,
+    opacity: 0.7,
+    marginTop: 2,
+  },
+
   /* Edit mode */
   editCard: {
     backgroundColor: Colors.darkCard,
@@ -988,6 +1136,78 @@ const styles = StyleSheet.create({
   chatLockedText: {
     fontSize: FontSize.sm,
     color: Colors.textMuted,
+    fontWeight: "500",
+  },
+
+  /* Guest modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  modalCard: {
+    backgroundColor: Colors.darkElevated,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xxl,
+    width: "100%",
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: "800",
+    color: Colors.text,
+    textAlign: "center",
+    marginBottom: Spacing.xs,
+  },
+  modalSubtitle: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    textAlign: "center",
+    marginBottom: Spacing.xxl,
+  },
+  modalLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  modalInput: {
+    backgroundColor: Colors.darkCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    fontSize: FontSize.md,
+    color: Colors.text,
+  },
+  modalSubmitBtn: {
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    paddingVertical: Spacing.md + 2,
+    alignItems: "center",
+    marginTop: Spacing.xxl,
+  },
+  modalSubmitText: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+    color: Colors.dark,
+  },
+  modalLoginLink: {
+    alignItems: "center",
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  modalLoginText: {
+    fontSize: FontSize.sm,
+    color: Colors.accent,
     fontWeight: "500",
   },
 });

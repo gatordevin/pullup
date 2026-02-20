@@ -5,19 +5,13 @@ import { useAuth } from "@/providers/AuthProvider";
 import { Colors } from "@/lib/constants";
 
 export default function Index() {
-  const { session, profile, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
-
-    if (!session) {
-      router.replace("/(auth)/login");
-    } else if (!profile?.onboarded) {
-      router.replace("/(auth)/onboarding");
-    } else {
-      router.replace("/(tabs)");
-    }
-  }, [session, profile, isLoading]);
+    // Everyone goes to the feed — login is not required
+    router.replace("/(tabs)");
+  }, [isLoading]);
 
   return (
     <View style={styles.container}>

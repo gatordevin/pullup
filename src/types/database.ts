@@ -42,6 +42,8 @@ export interface Database {
           favorite_location_id: string | null;
           expo_push_token: string | null;
           avatar_url: string | null;
+          email: string | null;
+          is_guest: boolean;
           onboarded: boolean;
           created_at: string;
           updated_at: string;
@@ -54,6 +56,8 @@ export interface Database {
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
           avatar_url?: string | null;
+          email?: string | null;
+          is_guest?: boolean;
           onboarded?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -66,6 +70,8 @@ export interface Database {
           favorite_location_id?: string | null;
           expo_push_token?: string | null;
           avatar_url?: string | null;
+          email?: string | null;
+          is_guest?: boolean;
           onboarded?: boolean;
           created_at?: string;
           updated_at?: string;

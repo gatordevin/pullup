@@ -30,7 +30,7 @@ import {
 import type { GameWithLocation } from "@/types/database";
 
 export default function ProfileScreen() {
-  const { user, signOut, refreshProfile } = useAuth();
+  const { user, signOut, refreshProfile, isGuest, guestLogout } = useAuth();
   const { profile, loading, fetchProfile } = useProfile(user?.id);
   const [myGames, setMyGames] = useState<GameWithLocation[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
@@ -38,9 +38,13 @@ export default function ProfileScreen() {
   const [newName, setNewName] = useState("");
 
   useEffect(() => {
-    fetchProfile();
-    fetchMyGames();
-  }, []);
+    if (user) {
+      fetchProfile();
+      fetchMyGames();
+    } else {
+      setGamesLoading(false);
+    }
+  }, [user?.id]);
 
   const fetchMyGames = async () => {
     if (!user) return;
@@ -78,6 +82,10 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = () => {
+    if (isGuest) {
+      guestLogout();
+      return;
+    }
     if (Platform.OS === "web") {
       if ((window as any).confirm("Sign Out\nAre you sure?")) {
         signOut().then(() => router.replace("/(auth)/login"));
@@ -96,6 +104,33 @@ export default function ProfileScreen() {
       ]);
     }
   };
+
+  // Not logged in at all
+  if (!user) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.notLoggedTitle}>Welcome to PullUp</Text>
+        <Text style={styles.notLoggedSub}>
+          Sign in to track your games and manage your profile
+        </Text>
+        <Pressable
+          onPress={() => router.push("/(auth)/login")}
+          style={({ pressed }) => [
+            styles.loginBtn,
+            pressed && { opacity: 0.8 },
+          ]}
+        >
+          <LinearGradient
+            colors={[...Gradient.brand]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: BorderRadius.md }]}
+          />
+          <Text style={styles.loginBtnText}>Log In / Sign Up</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -120,6 +155,19 @@ export default function ProfileScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.inner}>
+        {/* Guest banner */}
+        {isGuest && (
+          <Pressable
+            onPress={() => router.push("/(auth)/login")}
+            style={styles.guestBanner}
+          >
+            <Text style={styles.guestBannerText}>
+              You're browsing as a guest.{" "}
+              <Text style={styles.guestBannerLink}>Create an account</Text> to keep your data.
+            </Text>
+          </Pressable>
+        )}
+
         {/* Profile header */}
         <View style={styles.profileCard}>
           <LinearGradient
@@ -159,7 +207,10 @@ export default function ProfileScreen() {
               </Text>
             </Pressable>
           )}
-          <Text style={styles.email}>{user?.email}</Text>
+          <Text style={styles.email}>
+            {user?.email}
+            {isGuest && " (Guest)"}
+          </Text>
 
           <View style={styles.tags}>
             {sportLabel && (
@@ -200,7 +251,7 @@ export default function ProfileScreen() {
           myGames.map((game) => <GameCard key={game.id} game={game} />)
         )}
 
-        {/* Sign Out */}
+        {/* Sign Out / Upgrade */}
         <Pressable
           onPress={handleSignOut}
           style={({ pressed }) => [
@@ -208,7 +259,9 @@ export default function ProfileScreen() {
             pressed && { opacity: 0.7 },
           ]}
         >
-          <Text style={styles.signOutText}>Sign Out</Text>
+          <Text style={styles.signOutText}>
+            {isGuest ? "Clear Guest Data" : "Sign Out"}
+          </Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -228,6 +281,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.dark,
+    paddingHorizontal: Spacing.xxl,
+  },
+
+  notLoggedTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: "800",
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.5,
+  },
+  notLoggedSub: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    textAlign: "center",
+    marginBottom: Spacing.xxl,
+  },
+  loginBtn: {
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    paddingVertical: Spacing.md + 2,
+    paddingHorizontal: Spacing.xxxxl,
+    alignItems: "center",
+  },
+  loginBtnText: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+    color: Colors.dark,
+  },
+
+  guestBanner: {
+    backgroundColor: Colors.accent + "15",
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.accent + "30",
+    padding: Spacing.md,
+    alignItems: "center",
+  },
+  guestBannerText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    textAlign: "center",
+  },
+  guestBannerLink: {
+    color: Colors.accent,
+    fontWeight: "600",
   },
 
   profileCard: {
