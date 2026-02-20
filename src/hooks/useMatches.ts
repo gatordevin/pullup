@@ -88,31 +88,20 @@ export function useMatches(gameId: string | undefined) {
     ): Promise<{ error?: string }> => {
       if (!gameId) return { error: "No game" };
 
-      const { data: match, error: matchError } = await supabase
-        .from("matches")
-        .insert({
-          game_id: gameId,
-          team1_score: team1Score,
-          team2_score: team2Score,
-          recorded_by: recordedBy,
-          notes: notes ?? null,
-        })
-        .select("id")
-        .single();
+      const team1Players = players.filter((p) => p.team === 1).map((p) => p.user_id);
+      const team2Players = players.filter((p) => p.team === 2).map((p) => p.user_id);
 
-      if (matchError || !match) return { error: matchError?.message ?? "Failed to create match" };
+      const { error } = await supabase.rpc("record_match_and_update_stats", {
+        p_game_id: gameId,
+        p_team1_score: team1Score,
+        p_team2_score: team2Score,
+        p_recorded_by: recordedBy,
+        p_notes: notes ?? null,
+        p_team1_players: team1Players,
+        p_team2_players: team2Players,
+      });
 
-      if (players.length > 0) {
-        const { error: playersError } = await supabase.from("match_players").insert(
-          players.map((p) => ({
-            match_id: match.id,
-            user_id: p.user_id,
-            team: p.team,
-          }))
-        );
-        if (playersError) return { error: playersError.message };
-      }
-
+      if (error) return { error: error.message };
       await fetchMatches();
       return {};
     },

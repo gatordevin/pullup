@@ -18,6 +18,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Avatar } from "@/components/ui/Avatar";
 import { GameCard } from "@/components/game/GameCard";
 import { useFriends } from "@/hooks/useFriends";
+import { usePlayerStats } from "@/hooks/usePlayerStats";
 import QRCode from "react-native-qrcode-svg";
 import { supabase } from "@/lib/supabase";
 import * as Clipboard from "expo-clipboard";
@@ -59,12 +60,14 @@ export default function ProfileScreen() {
     declineRequest,
     removeFriend,
   } = useFriends(user?.id);
+  const { stats: playerStats, fetchStats: fetchPlayerStats } = usePlayerStats(user?.id);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchMyGames();
       fetchStats();
+      fetchPlayerStats();
       if (!isGuest) fetchFriends();
     } else {
       setGamesLoading(false);
@@ -284,6 +287,53 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Joined</Text>
           </View>
         </View>
+
+        {/* Match Stats */}
+        {playerStats && playerStats.matches_played > 0 && (
+          <View style={styles.matchStatsCard}>
+            <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
+            <View style={styles.matchStatsRow}>
+              <View style={styles.matchStatItem}>
+                <Text style={styles.matchStatValue}>{playerStats.matches_played}</Text>
+                <Text style={styles.matchStatLabel}>Played</Text>
+              </View>
+              <View style={styles.matchStatItem}>
+                <Text style={[styles.matchStatValue, { color: Colors.success }]}>{playerStats.wins}</Text>
+                <Text style={styles.matchStatLabel}>Wins</Text>
+              </View>
+              <View style={styles.matchStatItem}>
+                <Text style={[styles.matchStatValue, { color: Colors.error }]}>{playerStats.losses}</Text>
+                <Text style={styles.matchStatLabel}>Losses</Text>
+              </View>
+              <View style={styles.matchStatItem}>
+                <Text style={styles.matchStatValue}>
+                  {playerStats.matches_played > 0
+                    ? Math.round((playerStats.wins / playerStats.matches_played) * 100) + "%"
+                    : "—"}
+                </Text>
+                <Text style={styles.matchStatLabel}>Win %</Text>
+              </View>
+            </View>
+            <View style={styles.eloRow}>
+              <View style={styles.eloBox}>
+                <Text style={styles.eloValue}>{playerStats.elo_rating}</Text>
+                <Text style={styles.eloLabel}>ELO Rating</Text>
+              </View>
+              <View style={styles.eloBox}>
+                <Text style={[styles.eloValue, { color: Colors.accent }]}>{playerStats.highest_elo}</Text>
+                <Text style={styles.eloLabel}>Peak ELO</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Show placeholder if no matches yet */}
+        {(!playerStats || playerStats.matches_played === 0) && user && !isGuest && (
+          <View style={styles.matchStatsCard}>
+            <Text style={styles.matchStatsSectionTitle}>Match Stats</Text>
+            <Text style={styles.matchStatsEmpty}>No matches recorded yet. Join a game and record your first match!</Text>
+          </View>
+        )}
 
         {/* My Games */}
         <Text style={styles.sectionTitle}>My Games</Text>
@@ -837,5 +887,70 @@ const styles = StyleSheet.create({
     color: Colors.error,
     fontSize: FontSize.sm,
     fontWeight: "600",
+  },
+  matchStatsCard: {
+    backgroundColor: Colors.darkCard,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+  },
+  matchStatsSectionTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.lg,
+  },
+  matchStatsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: Spacing.lg,
+  },
+  matchStatItem: {
+    alignItems: "center",
+  },
+  matchStatValue: {
+    fontSize: FontSize.xxl,
+    fontWeight: "900",
+    color: Colors.text,
+    lineHeight: 28,
+  },
+  matchStatLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  eloRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  eloBox: {
+    flex: 1,
+    backgroundColor: Colors.darkTertiary,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    alignItems: "center",
+  },
+  eloValue: {
+    fontSize: FontSize.xl,
+    fontWeight: "900",
+    color: Colors.text,
+  },
+  eloLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  matchStatsEmpty: {
+    fontSize: FontSize.sm,
+    color: Colors.textMuted,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
