@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Colors, BorderRadius, FontSize } from "@/lib/constants";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors, Gradient } from "@/lib/constants";
 
 interface AvatarProps {
   name: string | null;
@@ -18,7 +19,10 @@ export function Avatar({ name, size = 40 }: AvatarProps) {
     : "?";
 
   return (
-    <View
+    <LinearGradient
+      colors={[...Gradient.brand]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={[
         styles.container,
         {
@@ -28,19 +32,18 @@ export function Avatar({ name, size = 40 }: AvatarProps) {
         },
       ]}
     >
-      <Text style={[styles.text, { fontSize: size * 0.4 }]}>{initials}</Text>
-    </View>
+      <Text style={[styles.text, { fontSize: size * 0.38 }]}>{initials}</Text>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   text: {
-    color: Colors.white,
-    fontWeight: "700",
+    color: Colors.dark,
+    fontWeight: "800",
   },
 });

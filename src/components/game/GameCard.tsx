@@ -70,16 +70,13 @@ export function GameCard({ game }: GameCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.darkElevated,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: Colors.darkTertiary,
   },
   header: {
     flexDirection: "row",
@@ -101,18 +98,18 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   badge: {
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: Colors.accent + "20",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
   },
   badgeFull: {
-    backgroundColor: Colors.error + "15",
+    backgroundColor: Colors.error + "20",
   },
   badgeText: {
     fontSize: FontSize.xs,
     fontWeight: "700",
-    color: Colors.primary,
+    color: Colors.accent,
   },
   badgeFullText: {
     color: Colors.error,
@@ -143,13 +140,13 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.darkTertiary,
     borderRadius: 2,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 2,
   },
   progressFull: {

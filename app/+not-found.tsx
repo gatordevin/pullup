@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: Spacing.xl,
+    backgroundColor: Colors.dark,
   },
   title: {
     fontSize: FontSize.xl,
@@ -31,6 +32,6 @@ const styles = StyleSheet.create({
   link: {
     marginTop: Spacing.lg,
     fontSize: FontSize.md,
-    color: Colors.primary,
+    color: Colors.accent,
   },
 });

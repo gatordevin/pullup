@@ -34,7 +34,7 @@ export default function HomeScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={Colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -45,7 +45,7 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={refresh}
-              tintColor={Colors.primary}
+              tintColor={Colors.accent}
             />
           }
           contentContainerStyle={games.length === 0 ? styles.center : styles.list}
@@ -54,7 +54,7 @@ export default function HomeScreen() {
               <Text style={styles.emptyEmoji}>🏓</Text>
               <Text style={styles.emptyTitle}>No games yet</Text>
               <Text style={styles.emptyText}>
-                Be the first to create a pickup game!
+                Be the first to post a game!
               </Text>
             </View>
           }
@@ -69,7 +69,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.dark,
   },
   list: {
     paddingTop: Spacing.sm,
@@ -96,6 +96,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
 });

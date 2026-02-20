@@ -47,12 +47,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderTopColor: Colors.darkTertiary,
+    backgroundColor: Colors.dark,
   },
   input: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.darkElevated,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
@@ -62,18 +62,18 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   sendBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     justifyContent: "center",
   },
   sendDisabled: {
-    opacity: 0.4,
+    opacity: 0.3,
   },
   sendText: {
-    color: Colors.white,
-    fontWeight: "600",
+    color: Colors.dark,
+    fontWeight: "700",
     fontSize: FontSize.sm,
   },
 });

@@ -40,7 +40,6 @@ export default function OnboardingScreen() {
       return;
     }
 
-    // Final step — save profile
     setLoading(true);
     setError(null);
 
@@ -108,7 +107,7 @@ export default function OnboardingScreen() {
           <Text style={styles.title}>Skill level?</Text>
           <Text style={styles.subtitle}>No pressure — just for matching</Text>
 
-          <View style={styles.chipColumn}>
+          <View style={styles.chipRow}>
             {SKILL_LEVELS.map((s) => (
               <Chip
                 key={s.value}
@@ -126,7 +125,7 @@ export default function OnboardingScreen() {
           <Text style={styles.title}>Favorite spot?</Text>
           <Text style={styles.subtitle}>Where do you usually play?</Text>
 
-          <View style={styles.chipColumn}>
+          <View style={styles.chipRow}>
             {UF_LOCATIONS.map((loc) => (
               <Chip
                 key={loc.id}
@@ -166,7 +165,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.dark,
   },
   content: {
     flexGrow: 1,
@@ -183,10 +182,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.darkTertiary,
   },
   dotActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     width: 24,
   },
   title: {
@@ -203,18 +202,14 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: FontSize.sm,
     fontWeight: "600",
-    color: Colors.text,
+    color: Colors.textSecondary,
     marginBottom: Spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
-  },
-  chipColumn: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
   },
   error: {
     color: Colors.error,

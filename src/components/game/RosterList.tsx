@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Colors, FontSize, Spacing } from "@/lib/constants";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -50,6 +50,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.darkTertiary,
   },
   name: {
     flex: 1,
@@ -58,7 +60,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   hostBadge: {
-    backgroundColor: Colors.primary + "20",
+    backgroundColor: Colors.accent + "25",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: 4,
@@ -66,6 +68,6 @@ const styles = StyleSheet.create({
   hostText: {
     fontSize: 10,
     fontWeight: "700",
-    color: Colors.primary,
+    color: Colors.accent,
   },
 });

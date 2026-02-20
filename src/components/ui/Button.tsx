@@ -7,7 +7,8 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { Colors, BorderRadius, FontSize, Spacing } from "@/lib/constants";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors, Gradient, BorderRadius, FontSize, Spacing } from "@/lib/constants";
 
 interface ButtonProps {
   title: string;
@@ -32,6 +33,45 @@ export function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
+  const inner = loading ? (
+    <ActivityIndicator
+      color={variant === "outline" || variant === "ghost" ? Colors.accent : Colors.dark}
+      size="small"
+    />
+  ) : (
+    <Text
+      style={[
+        styles.text,
+        styles[`text_${variant}`],
+        styles[`textSize_${size}`],
+        textStyle,
+      ]}
+    >
+      {title}
+    </Text>
+  );
+
+  // Gradient fill for primary variant
+  if (variant === "primary") {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled}
+        activeOpacity={0.8}
+        style={[isDisabled && styles.disabled, style]}
+      >
+        <LinearGradient
+          colors={[...Gradient.brand]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.base, styles[`size_${size}`]]}
+        >
+          {inner}
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -45,23 +85,7 @@ export function Button({
       ]}
       activeOpacity={0.7}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === "outline" || variant === "ghost" ? Colors.primary : Colors.white}
-          size="small"
-        />
-      ) : (
-        <Text
-          style={[
-            styles.text,
-            styles[`text_${variant}`],
-            styles[`textSize_${size}`],
-            textStyle,
-          ]}
-        >
-          {title}
-        </Text>
-      )}
+      {inner}
     </TouchableOpacity>
   );
 }
@@ -72,16 +96,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: BorderRadius.md,
   },
-  primary: {
-    backgroundColor: Colors.primary,
-  },
+  primary: {},
   secondary: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.darkElevated,
   },
   outline: {
     backgroundColor: "transparent",
     borderWidth: 1.5,
-    borderColor: Colors.primary,
+    borderColor: Colors.accent,
   },
   ghost: {
     backgroundColor: "transparent",
@@ -100,22 +122,22 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   text: {
-    fontWeight: "600",
+    fontWeight: "700",
   },
   text_primary: {
-    color: Colors.white,
+    color: Colors.dark,
   },
   text_secondary: {
-    color: Colors.white,
+    color: Colors.text,
   },
   text_outline: {
-    color: Colors.primary,
+    color: Colors.accent,
   },
   text_ghost: {
-    color: Colors.primary,
+    color: Colors.accent,
   },
   textSize_sm: {
     fontSize: FontSize.sm,

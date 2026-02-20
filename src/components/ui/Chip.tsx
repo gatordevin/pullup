@@ -23,23 +23,25 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
 const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.darkElevated,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.darkTertiary,
     marginRight: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   selected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.accent + "20",
+    borderColor: Colors.accent,
   },
   text: {
     fontSize: FontSize.sm,
-    color: Colors.text,
+    color: Colors.textSecondary,
     fontWeight: "500",
   },
   selectedText: {
-    color: Colors.white,
+    color: Colors.accent,
+    fontWeight: "600",
   },
 });

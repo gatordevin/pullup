@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { StyleSheet } from "react-native";
-import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Button } from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 
@@ -30,7 +29,7 @@ export function JoinButton({
       if (hasJoined) {
         await supabase
           .from("game_participants")
-          .update({ status: "left" })
+          .update({ status: "left" as const })
           .eq("game_id", gameId)
           .eq("user_id", userId);
       } else {
@@ -44,12 +43,12 @@ export function JoinButton({
         if (existing) {
           await supabase
             .from("game_participants")
-            .update({ status: "joined" })
-            .eq("id", existing.id);
+            .update({ status: "joined" as const })
+            .eq("id", (existing as { id: string }).id);
         } else {
           await supabase
             .from("game_participants")
-            .insert({ game_id: gameId, user_id: userId, status: "joined" });
+            .insert({ game_id: gameId, user_id: userId, status: "joined" as const });
         }
       }
       if (Platform.OS !== "web") {
@@ -64,7 +63,7 @@ export function JoinButton({
   };
 
   if (isHost) {
-    return <Button title="You're hosting" onPress={() => {}} variant="ghost" disabled />;
+    return <Button title="You're hosting" onPress={() => {}} variant="secondary" disabled />;
   }
 
   if (isFull && !hasJoined) {
@@ -73,7 +72,7 @@ export function JoinButton({
 
   return (
     <Button
-      title={hasJoined ? "Leave Game" : "Join Game"}
+      title={hasJoined ? "Leave Game" : "Pull Up"}
       onPress={handlePress}
       variant={hasJoined ? "outline" : "primary"}
       size="lg"

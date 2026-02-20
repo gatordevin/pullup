@@ -37,26 +37,26 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     marginBottom: 2,
     marginLeft: Spacing.xs,
   },
   bubble: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.darkTertiary,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     maxWidth: "80%",
   },
   ownBubble: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
   },
   text: {
     fontSize: FontSize.sm,
     color: Colors.text,
   },
   ownText: {
-    color: Colors.white,
+    color: Colors.dark,
   },
   time: {
     fontSize: 10,

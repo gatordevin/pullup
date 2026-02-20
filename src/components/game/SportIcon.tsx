@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Colors, BorderRadius } from "@/lib/constants";
+import { Colors } from "@/lib/constants";
 import type { Sport } from "@/lib/constants";
 
 interface SportIconProps {
@@ -9,7 +9,7 @@ interface SportIconProps {
 }
 
 const SPORT_CONFIG = {
-  pickleball: { emoji: "🏓", bg: Colors.primary },
+  pickleball: { emoji: "🏓", bg: Colors.accent },
   spikeball: { emoji: "🔵", bg: Colors.secondary },
 };
 
@@ -23,7 +23,7 @@ export function SportIcon({ sport, size = 36 }: SportIconProps) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: config.bg + "15",
+          backgroundColor: config.bg + "20",
         },
       ]}
     >

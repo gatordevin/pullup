@@ -1,104 +1,86 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useAuth as useClerkAuth, useUser } from "@clerk/clerk-expo";
 import { supabase } from "@/lib/supabase";
 import { Profile } from "@/types/database";
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: Profile | null;
+  isSignedIn: boolean;
   isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  userId: string | null;
+  email: string | null;
+  profile: Profile | null;
   signOut: () => Promise<void>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const { isSignedIn, isLoaded, signOut: clerkSignOut, getToken } = useClerkAuth();
+  const { user: clerkUser } = useUser();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+  const userId = clerkUser?.id ?? null;
+  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? null;
+
+  const fetchProfile = useCallback(async () => {
+    if (!userId) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+
+    // Ensure profile exists in Supabase (upsert on first login)
+    const { data: existing } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .single();
-    setProfile(data as Profile | null);
-  };
+
+    if (existing) {
+      setProfile(existing as Profile);
+    } else {
+      // Create profile for new Clerk user
+      const { data: created } = await supabase
+        .from("profiles")
+        .upsert({ id: userId, display_name: clerkUser?.firstName ?? null } as any, {
+          onConflict: "id",
+        })
+        .select("*")
+        .single();
+      setProfile(created as Profile | null);
+    }
+    setProfileLoading(false);
+  }, [userId, clerkUser?.firstName]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setIsLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error ? new Error(error.message) : null };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error ? new Error(error.message) : null };
-  };
+    if (isLoaded && isSignedIn) {
+      fetchProfile();
+    } else if (isLoaded) {
+      setProfile(null);
+      setProfileLoading(false);
+    }
+  }, [isLoaded, isSignedIn, fetchProfile]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
+    await clerkSignOut();
     setProfile(null);
   };
 
-  const verifyOtp = async (email: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: "signup",
-    });
-    return { error: error ? new Error(error.message) : null };
-  };
-
   const refreshProfile = async () => {
-    if (session?.user) {
-      await fetchProfile(session.user.id);
-    }
+    await fetchProfile();
   };
 
   return (
     <AuthContext.Provider
       value={{
-        session,
-        user: session?.user ?? null,
+        isSignedIn: isSignedIn ?? false,
+        isLoading: !isLoaded || (isSignedIn === true && profileLoading),
+        userId,
+        email,
         profile,
-        isLoading,
-        signUp,
-        signIn,
         signOut,
-        verifyOtp,
         refreshProfile,
       }}
     >
@@ -110,5 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
+
+  // Return a shape compatible with what screens expect
+  return {
+    session: ctx.isSignedIn ? {} : null,
+    user: ctx.userId ? { id: ctx.userId, email: ctx.email } : null,
+    profile: ctx.profile,
+    isLoading: ctx.isLoading,
+    signOut: ctx.signOut,
+    refreshProfile: ctx.refreshProfile,
+  };
 }

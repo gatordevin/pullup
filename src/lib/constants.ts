@@ -1,18 +1,41 @@
+// PullUp Brand — Dark mode + Nano Banana gradient
 export const Colors = {
-  primary: "#FA4616",
-  secondary: "#0021A5",
+  // Gradient endpoints
+  gradientStart: "#FFD60A", // Electric neon yellow
+  gradientEnd: "#FF9500", // Warm intense orange
+  // Solid accent (midpoint of gradient, for non-gradient contexts)
+  accent: "#FFB800",
+  // Dark surfaces
+  dark: "#1C1C1E", // Primary background
+  darkElevated: "#2C2C2E", // Cards, elevated surfaces
+  darkTertiary: "#3A3A3C", // Borders, dividers
+  darkInput: "#1E1E20", // Input fields
+  // Text on dark
+  text: "#FFFFFF",
+  textSecondary: "#A1A1A6",
+  textMuted: "#636366",
+  // Semantic
+  success: "#30D158",
+  error: "#FF453A",
+  warning: "#FFD60A",
+  // Utility
   white: "#FFFFFF",
-  background: "#F8F9FA",
-  card: "#FFFFFF",
-  text: "#1A1A1A",
-  textSecondary: "#6B7280",
-  textMuted: "#9CA3AF",
-  border: "#E5E7EB",
-  success: "#10B981",
-  error: "#EF4444",
-  warning: "#F59E0B",
-  overlay: "rgba(0,0,0,0.5)",
+  black: "#000000",
+  overlay: "rgba(0,0,0,0.6)",
+  // Legacy aliases (keeps components compiling during transition)
+  primary: "#FFB800",
+  secondary: "#FF9500",
+  background: "#1C1C1E",
+  card: "#2C2C2E",
+  border: "#3A3A3C",
 } as const;
+
+export const Gradient = {
+  // The signature yellow→orange "Nano Banana" gradient
+  brand: ["#FFD60A", "#FF9500"] as const,
+  // Subtle dark gradient for backgrounds
+  darkSurface: ["#1C1C1E", "#121214"] as const,
+};
 
 export const Spacing = {
   xs: 4,
@@ -22,6 +45,7 @@ export const Spacing = {
   xl: 20,
   xxl: 24,
   xxxl: 32,
+  xxxxl: 48,
 } as const;
 
 export const FontSize = {
@@ -32,6 +56,7 @@ export const FontSize = {
   xl: 20,
   xxl: 24,
   xxxl: 32,
+  display: 40,
 } as const;
 
 export const BorderRadius = {
@@ -39,6 +64,7 @@ export const BorderRadius = {
   md: 10,
   lg: 14,
   xl: 20,
+  xxl: 28,
   full: 9999,
 } as const;
 

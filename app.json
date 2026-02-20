@@ -4,14 +4,14 @@
     "slug": "pullup",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "scheme": "pullup",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo-horizontal.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FA4616"
+      "backgroundColor": "#1C1C1E"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,14 +19,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FA4616"
+        "foregroundImage": "./assets/app-icon.png",
+        "backgroundColor": "#1C1C1E"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.pullup.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/app-icon.png",
       "bundler": "metro"
     },
     "plugins": [

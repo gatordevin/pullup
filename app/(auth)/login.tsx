@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,18 +6,20 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
+import { useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/providers/AuthProvider";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { loginSchema, type LoginForm } from "@/lib/validators";
 import { Colors, FontSize, Spacing } from "@/lib/constants";
 
 export default function LoginScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } = useSignIn();
+  const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } = useSignUp();
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,23 +38,34 @@ export default function LoginScreen() {
     setError(null);
     setLoading(true);
 
-    if (isSignUp) {
-      const { error: err } = await signUp(data.email, data.password);
-      setLoading(false);
-      if (err) {
-        setError(err.message);
-        return;
+    try {
+      if (isSignUp) {
+        if (!signUpLoaded || !signUp) return;
+        await signUp.create({
+          emailAddress: data.email,
+          password: data.password,
+        });
+        // Send email verification code
+        await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+        setLoading(false);
+        router.push({ pathname: "/(auth)/verify", params: { email: data.email, mode: "signup" } });
+      } else {
+        if (!signInLoaded || !signIn) return;
+        const result = await signIn.create({
+          identifier: data.email,
+          password: data.password,
+        });
+        setLoading(false);
+
+        if (result.status === "complete" && setSignInActive) {
+          await setSignInActive({ session: result.createdSessionId });
+          router.replace("/");
+        }
       }
-      router.push({ pathname: "/(auth)/verify", params: { email: data.email } });
-    } else {
-      const { error: err } = await signIn(data.email, data.password);
+    } catch (err: any) {
       setLoading(false);
-      if (err) {
-        setError(err.message);
-        return;
-      }
-      // Auth state change will trigger redirect in index.tsx
-      router.replace("/");
+      const message = err?.errors?.[0]?.longMessage ?? err?.message ?? "Something went wrong";
+      setError(message);
     }
   };
 
@@ -66,7 +79,11 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>PullUp 🏓</Text>
+          <Image
+            source={require("../../assets/logo-horizontal.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.subtitle}>
             Pickup sports for UF Gators
           </Text>
@@ -135,7 +152,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.dark,
   },
   scroll: {
     flexGrow: 1,
@@ -144,17 +161,16 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: Spacing.xxxl,
+    marginBottom: Spacing.xxxxl,
   },
-  title: {
-    fontSize: FontSize.xxxl,
-    fontWeight: "800",
-    color: Colors.primary,
+  logo: {
+    width: 240,
+    height: 80,
+    marginBottom: Spacing.md,
   },
   subtitle: {
     fontSize: FontSize.md,
     color: Colors.textSecondary,
-    marginTop: Spacing.sm,
   },
   form: {
     width: "100%",

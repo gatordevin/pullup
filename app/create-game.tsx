@@ -31,7 +31,7 @@ export default function CreateGameScreen() {
   const [sport, setSport] = useState<Sport>("pickleball");
   const [skillLevel, setSkillLevel] = useState<SkillLevel>("any");
   const [locationId, setLocationId] = useState<string>("");
-  const [startsAt, setStartsAt] = useState(new Date(Date.now() + 3600000)); // 1 hour from now
+  const [startsAt, setStartsAt] = useState(new Date(Date.now() + 3600000));
   const [maxPlayers, setMaxPlayers] = useState("4");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -72,14 +72,12 @@ export default function CreateGameScreen() {
       return;
     }
 
-    // Auto-join host as participant
     const row = data as GameRow | null;
     if (row) {
       await supabase
         .from("game_participants")
         .insert({ game_id: row.id, user_id: user.id, status: "joined" as const });
 
-      // Copy deep link for sharing
       await copyGameLink(row.id);
       Alert.alert(
         "Game created!",
@@ -205,7 +203,7 @@ export default function CreateGameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.dark,
   },
   content: {
     padding: Spacing.xxl,
@@ -214,14 +212,15 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: FontSize.sm,
     fontWeight: "700",
-    color: Colors.text,
+    color: Colors.textSecondary,
     marginBottom: Spacing.sm,
     marginTop: Spacing.lg,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
   },
   dateRow: {
     flexDirection: "row",

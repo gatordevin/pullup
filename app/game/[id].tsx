@@ -35,7 +35,7 @@ export default function GameDetailScreen() {
   if (loading || !game) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -53,7 +53,7 @@ export default function GameDetailScreen() {
         onPress: async () => {
           await supabase
             .from("games")
-            .update({ status: "cancelled" })
+            .update({ status: "cancelled" as const })
             .eq("id", game.id);
           router.back();
         },
@@ -124,13 +124,13 @@ export default function GameDetailScreen() {
             <Button
               title="💬 Chat"
               onPress={() => setShowChat(true)}
-              variant="outline"
+              variant="secondary"
               size="sm"
             />
             <Button
               title="🔗 Share"
               onPress={handleShare}
-              variant="outline"
+              variant="secondary"
               size="sm"
             />
             {isHost && (
@@ -186,12 +186,13 @@ export default function GameDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.dark,
   },
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: Colors.dark,
   },
   scroll: {
     padding: Spacing.xxl,
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
   },
   countBox: {
     alignItems: "center",
-    backgroundColor: Colors.primary + "10",
+    backgroundColor: Colors.accent + "15",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
@@ -226,17 +227,19 @@ const styles = StyleSheet.create({
   countNumber: {
     fontSize: FontSize.xl,
     fontWeight: "800",
-    color: Colors.primary,
+    color: Colors.accent,
   },
   countLabel: {
     fontSize: FontSize.xs,
     color: Colors.textSecondary,
   },
   detailCard: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.darkElevated,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.xxl,
+    borderWidth: 1,
+    borderColor: Colors.darkTertiary,
   },
   detailRow: {
     flexDirection: "row",
@@ -266,7 +269,7 @@ const styles = StyleSheet.create({
   },
   chatHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: Colors.darkTertiary,
     padding: Spacing.sm,
   },
   chatList: {

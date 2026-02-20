@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
   Alert,
   ActivityIndicator,
 } from "react-native";
@@ -40,7 +39,6 @@ export default function ProfileScreen() {
   const fetchMyGames = async () => {
     if (!user) return;
 
-    // Fetch games where user is host
     const { data: hosted } = await supabase
       .from("games")
       .select("*, locations(*)")
@@ -48,14 +46,13 @@ export default function ProfileScreen() {
       .order("starts_at", { ascending: false })
       .limit(10);
 
-    // Fetch games where user is participant
     const { data: participantRows } = await supabase
       .from("game_participants")
       .select("game_id")
       .eq("user_id", user.id)
       .eq("status", "joined");
 
-    const participantGameIds = participantRows?.map((p) => p.game_id) ?? [];
+    const participantGameIds = participantRows?.map((p: any) => p.game_id) ?? [];
     let joined: GameWithLocation[] = [];
 
     if (participantGameIds.length > 0) {
@@ -90,7 +87,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -103,7 +100,7 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Profile Card */}
       <View style={styles.profileCard}>
-        <Avatar name={profile?.display_name ?? null} size={64} />
+        <Avatar name={profile?.display_name ?? null} size={72} />
         <Text style={styles.name}>{profile?.display_name ?? "Gator"}</Text>
         <Text style={styles.email}>{user?.email}</Text>
 
@@ -131,7 +128,7 @@ export default function ProfileScreen() {
       {/* My Games */}
       <Text style={styles.sectionTitle}>My Games</Text>
       {gamesLoading ? (
-        <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.lg }} />
+        <ActivityIndicator color={Colors.accent} style={{ marginTop: Spacing.lg }} />
       ) : myGames.length === 0 ? (
         <Text style={styles.emptyText}>No games yet — create or join one!</Text>
       ) : (
@@ -153,7 +150,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.dark,
   },
   content: {
     paddingBottom: 40,
@@ -162,22 +159,25 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: Colors.dark,
   },
   profileCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.darkElevated,
     alignItems: "center",
     padding: Spacing.xxl,
     marginBottom: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.darkTertiary,
   },
   name: {
-    fontSize: FontSize.xl,
+    fontSize: FontSize.xxl,
     fontWeight: "800",
     color: Colors.text,
     marginTop: Spacing.md,
   },
   email: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     marginTop: Spacing.xs,
   },
   tags: {
@@ -188,9 +188,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   tag: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.darkTertiary,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: BorderRadius.full,
   },
   tagText: {

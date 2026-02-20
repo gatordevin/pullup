@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Text, StyleSheet, Platform, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { useGames } from "@/hooks/useGames";
 import { Colors, UF_CAMPUS_CENTER, Spacing, FontSize } from "@/lib/constants";
-import type { GameWithLocation } from "@/types/database";
 
 let MapView: any;
 let Marker: any;
 let Callout: any;
 
-// react-native-maps doesn't support web
 if (Platform.OS !== "web") {
   const Maps = require("react-native-maps");
   MapView = Maps.default;
@@ -23,7 +21,8 @@ export default function MapScreen() {
   if (Platform.OS === "web") {
     return (
       <View style={styles.webFallback}>
-        <Text style={styles.webText}>📍 Map view is available on mobile</Text>
+        <Text style={styles.webIcon}>📍</Text>
+        <Text style={styles.webText}>Map view is available on mobile</Text>
         <Text style={styles.webSubtext}>
           Use the Games tab to browse upcoming games
         </Text>
@@ -34,7 +33,7 @@ export default function MapScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -46,6 +45,7 @@ export default function MapScreen() {
         initialRegion={UF_CAMPUS_CENTER}
         showsUserLocation
         showsMyLocationButton
+        userInterfaceStyle="dark"
       >
         {games.map((game) => (
           <Marker
@@ -54,7 +54,7 @@ export default function MapScreen() {
               latitude: game.locations?.latitude ?? 0,
               longitude: game.locations?.longitude ?? 0,
             }}
-            pinColor={game.sport === "pickleball" ? Colors.primary : Colors.secondary}
+            pinColor={Colors.accent}
             onCalloutPress={() => router.push(`/game/${game.id}`)}
           >
             <Callout>
@@ -65,7 +65,7 @@ export default function MapScreen() {
                 <Text style={styles.calloutPlayers}>
                   {game.current_players}/{game.max_players} players
                 </Text>
-                <Text style={styles.calloutTap}>Tap for details →</Text>
+                <Text style={styles.calloutTap}>Tap for details</Text>
               </View>
             </Callout>
           </Marker>
@@ -78,6 +78,7 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.dark,
   },
   map: {
     flex: 1,
@@ -86,6 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: Colors.dark,
   },
   callout: {
     padding: Spacing.sm,
@@ -94,7 +96,6 @@ const styles = StyleSheet.create({
   calloutSport: {
     fontSize: FontSize.sm,
     fontWeight: "700",
-    color: Colors.text,
   },
   calloutPlayers: {
     fontSize: FontSize.xs,
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
   },
   calloutTap: {
     fontSize: FontSize.xs,
-    color: Colors.primary,
+    color: Colors.accent,
     fontWeight: "600",
     marginTop: 4,
   },
@@ -112,6 +113,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: Spacing.xxl,
+    backgroundColor: Colors.dark,
+  },
+  webIcon: {
+    fontSize: 48,
+    marginBottom: Spacing.lg,
   },
   webText: {
     fontSize: FontSize.lg,
@@ -121,7 +127,7 @@ const styles = StyleSheet.create({
   },
   webSubtext: {
     fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     textAlign: "center",
   },
 });

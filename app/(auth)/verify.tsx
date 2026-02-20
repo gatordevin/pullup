@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { useSignUp } from "@clerk/clerk-expo";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/providers/AuthProvider";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { otpSchema, type OtpForm } from "@/lib/validators";
@@ -11,7 +11,7 @@ import { Colors, FontSize, Spacing } from "@/lib/constants";
 
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
-  const { verifyOtp } = useAuth();
+  const { signUp, setActive, isLoaded } = useSignUp();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,19 +25,25 @@ export default function VerifyScreen() {
   });
 
   const onSubmit = async (data: OtpForm) => {
-    if (!email) return;
+    if (!isLoaded || !signUp) return;
     setError(null);
     setLoading(true);
 
-    const { error: err } = await verifyOtp(email, data.token);
-    setLoading(false);
+    try {
+      const result = await signUp.attemptEmailAddressVerification({
+        code: data.token,
+      });
+      setLoading(false);
 
-    if (err) {
-      setError(err.message);
-      return;
+      if (result.status === "complete" && setActive) {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/");
+      }
+    } catch (err: any) {
+      setLoading(false);
+      const message = err?.errors?.[0]?.longMessage ?? err?.message ?? "Invalid code";
+      setError(message);
     }
-
-    router.replace("/");
   };
 
   return (
@@ -93,7 +99,7 @@ export default function VerifyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.dark,
   },
   content: {
     flex: 1,
@@ -116,7 +122,7 @@ const styles = StyleSheet.create({
   },
   email: {
     fontWeight: "700",
-    color: Colors.text,
+    color: Colors.accent,
   },
   otpInput: {
     textAlign: "center",
