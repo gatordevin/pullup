@@ -19,7 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGame } from "@/hooks/useGame";
 import { useGameChat } from "@/hooks/useGameChat";
-import { useMatches } from "@/hooks/useMatches";
+import { useMatches, type GuestPlayer } from "@/hooks/useMatches";
 import { useFriends } from "@/hooks/useFriends";
 import { useGameInvites } from "@/hooks/useGameInvites";
 import { JoinButton } from "@/components/game/JoinButton";
@@ -84,6 +84,11 @@ export default function GameDetailScreen() {
   const [team2Score, setTeam2Score] = useState("0");
   const [teamAssignments, setTeamAssignments] = useState<Record<string, 1 | 2>>({});
   const [savingMatch, setSavingMatch] = useState(false);
+  const [team1Guests, setTeam1Guests] = useState<GuestPlayer[]>([]);
+  const [team2Guests, setTeam2Guests] = useState<GuestPlayer[]>([]);
+  const [addingGuestTeam, setAddingGuestTeam] = useState<1 | 2 | null>(null);
+  const [guestNameInput, setGuestNameInput] = useState("");
+  const [guestEmailInput, setGuestEmailInput] = useState("");
 
   // Game lifecycle (start / end)
   const [showStartConfirm, setShowStartConfirm] = useState(false);
@@ -712,7 +717,7 @@ export default function GameDetailScreen() {
                         <Text style={styles.matchTeamLabel}>{team1Win ? "🏆 " : ""}Team 1</Text>
                         <Text style={styles.matchScore}>{match.team1_score}</Text>
                         <Text style={styles.matchPlayers} numberOfLines={1}>
-                          {team1.map((p) => p.profile?.display_name ?? "Player").join(", ") || "—"}
+                          {team1.map((p) => p.guest_name ?? p.profile?.display_name ?? "Player").join(", ") || "—"}
                         </Text>
                       </View>
                       <Text style={styles.matchVs}>vs</Text>
@@ -720,7 +725,7 @@ export default function GameDetailScreen() {
                         <Text style={styles.matchTeamLabel}>{team2Win ? "🏆 " : ""}Team 2</Text>
                         <Text style={styles.matchScore}>{match.team2_score}</Text>
                         <Text style={styles.matchPlayers} numberOfLines={1}>
-                          {team2.map((p) => p.profile?.display_name ?? "Player").join(", ") || "—"}
+                          {team2.map((p) => p.guest_name ?? p.profile?.display_name ?? "Player").join(", ") || "—"}
                         </Text>
                       </View>
                     </View>
@@ -843,7 +848,7 @@ export default function GameDetailScreen() {
 
             {/* Player team assignment */}
             <Text style={styles.assignTitle}>Assign Players to Teams</Text>
-            <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false}>
               {participants.map((p) => {
                 const assigned = teamAssignments[p.user_id];
                 return (
@@ -872,12 +877,92 @@ export default function GameDetailScreen() {
                   </View>
                 );
               })}
+
+              {/* Guest players */}
+              <View style={styles.guestSection}>
+                <Text style={styles.guestSectionTitle}>Non-app players</Text>
+                {team1Guests.map((g, i) => (
+                  <View key={`t1g${i}`} style={styles.guestRow}>
+                    <Text style={styles.guestTeamBadge}>T1</Text>
+                    <Text style={styles.guestName}>{g.name}{g.email ? ` (${g.email})` : ""}</Text>
+                    <Pressable onPress={() => setTeam1Guests((prev) => prev.filter((_, j) => j !== i))}>
+                      <Text style={styles.guestRemove}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))}
+                {team2Guests.map((g, i) => (
+                  <View key={`t2g${i}`} style={styles.guestRow}>
+                    <Text style={[styles.guestTeamBadge, { backgroundColor: "#4A90E2" + "33", color: "#4A90E2" }]}>T2</Text>
+                    <Text style={styles.guestName}>{g.name}{g.email ? ` (${g.email})` : ""}</Text>
+                    <Pressable onPress={() => setTeam2Guests((prev) => prev.filter((_, j) => j !== i))}>
+                      <Text style={styles.guestRemove}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))}
+                {addingGuestTeam !== null ? (
+                  <View style={styles.addGuestForm}>
+                    <Text style={styles.addGuestLabel}>Adding to Team {addingGuestTeam}</Text>
+                    <TextInput
+                      style={styles.guestInput}
+                      placeholder="Name (or 'Unknown')"
+                      placeholderTextColor={Colors.textMuted}
+                      value={guestNameInput}
+                      onChangeText={setGuestNameInput}
+                      autoFocus
+                    />
+                    <TextInput
+                      style={styles.guestInput}
+                      placeholder="Email (optional)"
+                      placeholderTextColor={Colors.textMuted}
+                      value={guestEmailInput}
+                      onChangeText={setGuestEmailInput}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                    <View style={{ flexDirection: "row", gap: Spacing.sm }}>
+                      <Pressable style={[styles.teamBtn, { flex: 1 }]} onPress={() => { setAddingGuestTeam(null); setGuestNameInput(""); setGuestEmailInput(""); }}>
+                        <Text style={styles.teamBtnText}>Cancel</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[styles.teamBtnActive1, styles.teamBtn, { flex: 1 }]}
+                        onPress={() => {
+                          const name = guestNameInput.trim() || "Unknown";
+                          const guest: GuestPlayer = { name, email: guestEmailInput.trim() || undefined };
+                          if (addingGuestTeam === 1) setTeam1Guests((prev) => [...prev, guest]);
+                          else setTeam2Guests((prev) => [...prev, guest]);
+                          setAddingGuestTeam(null);
+                          setGuestNameInput("");
+                          setGuestEmailInput("");
+                        }}
+                      >
+                        <Text style={[styles.teamBtnText, styles.teamBtnTextActive]}>Add</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: "row", gap: Spacing.sm, marginTop: Spacing.sm }}>
+                    <Pressable style={[styles.teamBtn, { flex: 1 }]} onPress={() => setAddingGuestTeam(1)}>
+                      <Text style={styles.teamBtnText}>+ T1 Guest</Text>
+                    </Pressable>
+                    <Pressable style={[styles.teamBtn, { flex: 1 }]} onPress={() => setAddingGuestTeam(2)}>
+                      <Text style={styles.teamBtnText}>+ T2 Guest</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
             </ScrollView>
 
             <View style={styles.modalActions}>
               <Pressable
                 style={styles.modalCancel}
-                onPress={() => setShowRecordMatch(false)}
+                onPress={() => {
+                  setShowRecordMatch(false);
+                  setTeam1Guests([]);
+                  setTeam2Guests([]);
+                  setAddingGuestTeam(null);
+                  setGuestNameInput("");
+                  setGuestEmailInput("");
+                }}
               >
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </Pressable>
@@ -894,11 +979,19 @@ export default function GameDetailScreen() {
                     parseInt(team1Score) || 0,
                     parseInt(team2Score) || 0,
                     assignedPlayers,
-                    user?.id ?? "unknown"
+                    user?.id ?? "unknown",
+                    undefined,
+                    team1Guests,
+                    team2Guests
                   );
                   setSavingMatch(false);
                   if (!result.error) {
                     setShowRecordMatch(false);
+                    setTeam1Guests([]);
+                    setTeam2Guests([]);
+                    setAddingGuestTeam(null);
+                    setGuestNameInput("");
+                    setGuestEmailInput("");
                   }
                 }}
               >
@@ -1939,5 +2032,66 @@ const styles = StyleSheet.create({
   },
   teamBtnTextActive: {
     color: Colors.text,
+  },
+
+  /* Guest player section in record match modal */
+  guestSection: {
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  guestSectionTitle: {
+    fontSize: FontSize.xs,
+    fontWeight: "700",
+    color: Colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+  },
+  guestRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  guestTeamBadge: {
+    fontSize: FontSize.xs,
+    fontWeight: "800",
+    color: Colors.accent,
+    backgroundColor: Colors.accent + "22",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  guestName: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+  },
+  guestRemove: {
+    fontSize: FontSize.sm,
+    color: Colors.error,
+    fontWeight: "700",
+    paddingHorizontal: Spacing.xs,
+  },
+  addGuestForm: {
+    marginTop: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  addGuestLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+  },
+  guestInput: {
+    backgroundColor: Colors.darkInput,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    color: Colors.text,
+    fontSize: FontSize.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
 });

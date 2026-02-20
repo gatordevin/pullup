@@ -6,6 +6,13 @@ export interface MatchPlayer {
   user_id: string;
   team: 1 | 2;
   profile?: Profile;
+  guest_name?: string;
+  guest_email?: string;
+}
+
+export interface GuestPlayer {
+  name: string;
+  email?: string;
 }
 
 export interface Match {
@@ -46,14 +53,18 @@ export function useMatches(gameId: string | undefined) {
       .select("*")
       .in("match_id", matchIds);
 
-    // Fetch profiles for all players
-    const playerUserIds = [...new Set((playerRows ?? []).map((p: any) => p.user_id))];
+    // Fetch profiles for real players (not guests)
+    const realPlayerIds = [...new Set(
+      (playerRows ?? [])
+        .filter((p: any) => !p.guest_name && !String(p.user_id).startsWith("guest_"))
+        .map((p: any) => p.user_id)
+    )];
     let profileMap: Record<string, Profile> = {};
-    if (playerUserIds.length > 0) {
+    if (realPlayerIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
         .select("*")
-        .in("id", playerUserIds);
+        .in("id", realPlayerIds);
       for (const p of (profiles as Profile[]) ?? []) {
         profileMap[p.id] = p;
       }
@@ -66,6 +77,8 @@ export function useMatches(gameId: string | undefined) {
         user_id: p.user_id,
         team: p.team as 1 | 2,
         profile: profileMap[p.user_id],
+        guest_name: p.guest_name ?? undefined,
+        guest_email: p.guest_email ?? undefined,
       });
     }
 
@@ -85,7 +98,9 @@ export function useMatches(gameId: string | undefined) {
       team2Score: number,
       players: { user_id: string; team: 1 | 2 }[],
       recordedBy: string,
-      notes?: string
+      notes?: string,
+      team1Guests?: GuestPlayer[],
+      team2Guests?: GuestPlayer[]
     ): Promise<{ error?: string }> => {
       if (!gameId) return { error: "No game" };
 
@@ -101,6 +116,8 @@ export function useMatches(gameId: string | undefined) {
         p_notes: notes ?? null,
         p_team1_players: team1Players,
         p_team2_players: team2Players,
+        p_team1_guests: team1Guests ?? [],
+        p_team2_guests: team2Guests ?? [],
       });
 
       if (error) return { error: error.message };
