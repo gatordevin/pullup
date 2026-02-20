@@ -20,6 +20,7 @@ import { GameCard } from "@/components/game/GameCard";
 import { useFriends } from "@/hooks/useFriends";
 import QRCode from "react-native-qrcode-svg";
 import { supabase } from "@/lib/supabase";
+import * as Clipboard from "expo-clipboard";
 import {
   Colors,
   Gradient,
@@ -30,6 +31,7 @@ import {
   SKILL_LEVELS,
   UF_LOCATIONS,
   APP_URL,
+  getInviteUrl,
 } from "@/lib/constants";
 import type { GameWithLocation } from "@/types/database";
 
@@ -47,6 +49,7 @@ export default function ProfileScreen() {
   const [friendError, setFriendError] = useState<string | null>(null);
   const [friendSuccess, setFriendSuccess] = useState<string | null>(null);
   const [addingFriend, setAddingFriend] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const {
     friends,
     incomingRequests,
@@ -356,9 +359,32 @@ export default function ProfileScreen() {
               ))
             )}
 
+            {/* Invite link */}
+            <Pressable
+              onPress={async () => {
+                if (!user) return;
+                await Clipboard.setStringAsync(getInviteUrl(user.id));
+                setInviteCopied(true);
+                setTimeout(() => setInviteCopied(false), 2500);
+              }}
+              style={({ pressed }) => [
+                styles.inviteBtn,
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Text style={styles.inviteBtnText}>
+                {inviteCopied ? "✓ Link Copied!" : "🔗 Copy Invite Link"}
+              </Text>
+              <Text style={styles.inviteBtnSub}>
+                {inviteCopied
+                  ? "Paste it anywhere to share"
+                  : "Friends open it to add you instantly"}
+              </Text>
+            </Pressable>
+
             {/* Add friend */}
             <View style={styles.addFriendCard}>
-              <Text style={styles.addFriendTitle}>Add Friend</Text>
+              <Text style={styles.addFriendTitle}>Add Friend by Email</Text>
               <View style={styles.addFriendRow}>
                 <TextInput
                   style={styles.addFriendInput}
@@ -677,6 +703,26 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     fontWeight: "700",
     color: Colors.dark,
+  },
+  inviteBtn: {
+    marginTop: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.accent + "18",
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.accent + "40",
+  },
+  inviteBtnText: {
+    fontSize: FontSize.md,
+    fontWeight: "700",
+    color: Colors.accent,
+  },
+  inviteBtnSub: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
   addFriendCard: {
     marginTop: Spacing.lg,

@@ -135,3 +135,7 @@ export function getGameCode(id: string): string {
 export function getGameUrl(id: string): string {
   return `${APP_URL}/game/${id}`;
 }
+
+export function getInviteUrl(userId: string): string {
+  return `${APP_URL}/add-friend/${userId}`;
+}
