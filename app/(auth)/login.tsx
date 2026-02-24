@@ -62,20 +62,31 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       if (isSignUp) {
-        if (!signUpLoaded || !signUp) return;
+        if (!signUpLoaded || !signUp) { setLoading(false); return; }
         await signUp.create({ emailAddress: data.email, password: data.password });
         await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
         setLoading(false);
         router.push({ pathname: "/(auth)/verify", params: { email: data.email, redirect: redirectParam ?? "" } });
       } else {
-        if (!signInLoaded || !signIn) return;
+        if (!signInLoaded || !signIn) { setLoading(false); return; }
         const result = await signIn.create({ identifier: data.email, password: data.password });
-        setLoading(false);
-        if (result.status === "complete" && setSignInActive) {
-          await setSignInActive({ session: result.createdSessionId });
+        if (result.status === "complete") {
+          await setSignInActive!({ session: result.createdSessionId });
           const redirect = consumePendingRedirect() ?? redirectParam;
           router.replace((redirect as any) ?? "/");
+        } else if (result.status === "needs_first_factor") {
+          const firstFactor = await signIn.attemptFirstFactor({ strategy: "password", password: data.password });
+          if (firstFactor.status === "complete") {
+            await setSignInActive!({ session: firstFactor.createdSessionId });
+            const redirect = consumePendingRedirect() ?? redirectParam;
+            router.replace((redirect as any) ?? "/");
+          } else {
+            setError("Additional verification required. Please try again.");
+          }
+        } else {
+          setError("Sign in could not be completed. Please try again.");
         }
+        setLoading(false);
       }
     } catch (err: any) {
       setLoading(false);
