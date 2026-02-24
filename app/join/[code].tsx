@@ -44,7 +44,8 @@ export default function JoinScreen() {
           setReferrerProfile(profile as Profile | null);
         }
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, [code]);
 
   // Auto-register referral if user is logged in
@@ -54,8 +55,8 @@ export default function JoinScreen() {
     supabase.rpc("register_referral", {
       p_referee_id: user.id,
       p_referral_code: code.toUpperCase(),
-      p_used_google: true, // Clerk handles this; we assume Google for now
-    });
+      p_used_google: true,
+    }).catch(() => {/* best-effort registration */});
   }, [user, isGuest, code, registered]);
 
   if (loading) {

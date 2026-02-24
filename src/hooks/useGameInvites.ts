@@ -76,12 +76,14 @@ export function useGameInvites(userId: string | undefined) {
   );
 
   const respondToInvite = useCallback(
-    async (inviteId: string, accept: boolean): Promise<void> => {
-      await supabase
+    async (inviteId: string, accept: boolean): Promise<{ error?: string }> => {
+      const { error } = await supabase
         .from("game_invites")
         .update({ status: accept ? "accepted" : "declined" })
         .eq("id", inviteId);
+      if (error) return { error: error.message };
       await fetchIncomingInvites();
+      return {};
     },
     [fetchIncomingInvites]
   );

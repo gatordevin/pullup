@@ -191,14 +191,16 @@ export default function GameDetailScreen() {
       .single();
 
     if (existing) {
-      await supabase
+      const { error } = await supabase
         .from("game_participants")
         .update({ status: "joined" as const })
         .eq("id", (existing as { id: string }).id);
+      if (error) throw new Error(error.message);
     } else {
-      await supabase
+      const { error } = await supabase
         .from("game_participants")
         .insert({ game_id: gameId, user_id: userId, status: "joined" as const });
+      if (error) throw new Error(error.message);
     }
   };
 
@@ -212,12 +214,16 @@ export default function GameDetailScreen() {
       return;
     }
     setGuestLoading(true);
-    const guestId = await guestLogin(guestName.trim(), guestEmail.trim());
-    // Auto-join the game immediately
-    await performJoin(id!, guestId);
-    setGuestLoading(false);
-    setShowGuestPrompt(false);
-    refresh();
+    try {
+      const guestId = await guestLogin(guestName.trim(), guestEmail.trim());
+      await performJoin(id!, guestId);
+      setShowGuestPrompt(false);
+      refresh();
+    } catch (err: any) {
+      crossAlert("Join failed", err?.message ?? "Could not join this game. Please try again.");
+    } finally {
+      setGuestLoading(false);
+    }
   };
 
   const startEdit = () => {

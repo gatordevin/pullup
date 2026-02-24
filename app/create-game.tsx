@@ -116,11 +116,15 @@ export default function CreateGameScreen() {
       return;
     }
     setGuestLoading(true);
-    const guestId = await guestLogin(guestName.trim(), guestEmail.trim());
-    setGuestLoading(false);
-    setShowGuestPrompt(false);
-    // Auto-create the game with the new guest ID
-    await createGame(guestId);
+    try {
+      const guestId = await guestLogin(guestName.trim(), guestEmail.trim());
+      setShowGuestPrompt(false);
+      await createGame(guestId);
+    } catch (err: any) {
+      crossAlert("Error", err?.message ?? "Could not create game. Please try again.");
+    } finally {
+      setGuestLoading(false);
+    }
   };
 
   const handleCreate = async () => {

@@ -23,7 +23,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   guestLogin: (name: string, email: string) => Promise<string>;
-  guestLogout: () => void;
+  guestLogout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -290,8 +290,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return guestData.id;
   };
 
-  const guestLogout = () => {
-    clearGuest();
+  const guestLogout = async () => {
+    await clearGuest();
     setGuest(null);
     setProfile(null);
   };
